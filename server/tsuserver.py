@@ -264,7 +264,7 @@ class TsuServer3:
 
     def save_miscdata(self):
         with open('config/data.yaml', 'w') as data:
-            json.dump(self.misc_data, data, indent=4)
+            yaml.dump(self.misc_data, data, indent=4)
 
     def load_backgrounds(self):
         """Load the backgrounds list from a YAML file."""
