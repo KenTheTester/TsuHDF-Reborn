@@ -380,7 +380,7 @@ class AreaManager:
             :param value: status code
             """
             allowed_values = ('idle', 'rp', 'casing', 'looking-for-players',
-                              'lfp', 'recess', 'gaming')
+                              'lfp', 'recess', 'gaming', 'building', 'standby')
             if value.lower() not in allowed_values:
                 raise AreaError(
                     f'Invalid status. Possible values: {", ".join(allowed_values)}'
