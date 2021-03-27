@@ -342,41 +342,39 @@ class ClientManager:
                 ClientError: No characters available in area
             """
             if self.area == area:
-                raise ClientError('User already in specified area.')
+                    raise ClientError('User already in specified area.')
             if area.is_locked == area.Locked.LOCKED and not self.is_mod and not self.id in area.invite_list:
-                raise ClientError('That area is locked!')
+                    raise ClientError('That area is locked!')
             if area.is_locked == area.Locked.SPECTATABLE and not self.is_mod and not self.id in area.invite_list:
-                self.send_ooc(
-                    'This area is spectatable, but not free - you cannot talk in-character unless invited.'
-                )
+                    self.send_ooc(
+                            'This area is spectatable, but not free - you cannot talk in-character unless invited.'
+                    )
 
             if self in self.area.afkers:
-                self.server.client_manager.toggle_afk(self)
+                    self.server.client_manager.toggle_afk(self)
             if self.area.jukebox:
-                self.area.remove_jukebox_vote(self, True)
+                    self.area.remove_jukebox_vote(self, True)
 
             old_area = self.area
             if not self.char_id == -1 and not area.is_char_available(self.char_id):
-                try:
-                    new_char_id = area.get_rand_avail_char_id()
-                except AreaError:
-                    raise ClientError('No available characters in that area.')
+                    try:
+                            new_char_id = area.get_rand_avail_char_id()
+                    except AreaError:
+                            raise ClientError('No available characters in that area.')
 
-                self.change_character(new_char_id)
-                self.send_ooc(
-                    f'Character taken, switched to {self.char_name}.')
+                    self.change_character(new_char_id)
+                    self.send_ooc(
+                            f'Character taken, switched to {self.char_name}.')
 
             self.area.remove_client(self)
             self.area = area
             area.new_client(self)
 
             self.send_ooc(
-                f'Changed area to {area.name} [{self.area.status}].')
-            self.area.send_command('CharsCheck',
-                                   *self.get_available_char_list())
-            self.area.send_command(
-                'CharsCheck', *self.get_available_char_list())
-			self.area.shadow_status[self.char_id] = [self.ipid, self.hdid]
+                    f'Changed area to {area.name} [{self.area.status}].')
+            self.area.send_command('CharsCheck',*self.get_available_char_list())
+            self.area.send_command('CharsCheck', *self.get_available_char_list())
+            self.area.shadow_status[self.char_id] = [self.ipid, self.hdid]
             self.send_command('HP', 1, self.area.hp_def)
             self.send_command('HP', 2, self.area.hp_pro)
             self.send_command('BN', self.area.background, self.pos)
