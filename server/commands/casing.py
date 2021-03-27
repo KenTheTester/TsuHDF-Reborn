@@ -24,7 +24,7 @@ __all__ = [
     'ooc_cmd_prompt',
     'ooc_cmd_case',
     'ooc_cmd_asspull',
-    'ooc_cmd_keywords'
+    'ooc_cmd_keywords',
     'ooc_cmd_testimony',
     'ooc_cmd_afk'
 ]
