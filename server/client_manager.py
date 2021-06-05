@@ -16,15 +16,17 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import re
-import string
 import time
 import hashlib
+import string
+import asyncio
+
+from typing import Any, List, Dict
 from heapq import heappop, heappush
 
 from server import database
 from server.constants import TargetType
 from server.exceptions import ClientError, AreaError
-
 
 class ClientManager:
     """Holds the list of all clients currently connected to the server."""
@@ -33,15 +35,20 @@ class ClientManager:
 
         Clients may only belong to a single room.
         """
-        def __init__(self, server, transport, user_id, ipid):
+        
+        def __init__(self, server, transport: asyncio.Transport, user_id: int, ipid: int):
             self.is_checked = False
             self.transport = transport
             self.hdid = ''
+            self.release = ''
+            self.major_version = ''
+            self.minor_version = ''
             self.id = user_id
             self.char_id = -1
             self.area = server.area_manager.default_area()
             self.server = server
             self.name = ''
+            self.showname = ''
             self.fake_name = ''
             self.is_mod = False
             self.mod_profile_name = None
@@ -102,43 +109,55 @@ class ClientManager:
             self.last_move_time = 0
             self.move_delay = 0
 
-        def send_raw_message(self, msg):
-            """
-            Send a raw packet over TCP.
-            :param msg: string to send
+        def send_raw_message(self, msg: str):
+            """Send a raw packet over TCP.
+
+            Args:
+                msg (str): Message to send
             """
             self.transport.write(msg.encode('utf-8'))
 
-        def send_command(self, command, *args):
-            """
-            Compose and send an AO-compatible message, with arguments
+        def send_command(self, command: str, *args):
+            """Compose and send an AO-compatible message, with arguments
             delimited by `#` and ending with `#%`.
-            :param command: command name
-            :param *args: list of arguments
+
+            Args:
+                command (str): command name
+                *args: tuple containing the packet arguments
             """
             if args:
                 if command == 'MS':
                     for evi_num in range(len(self.evi_list)):
                         if self.evi_list[evi_num] == args[11]:
-                            lst = list(args)
+                            lst = list(args) # convert to a list so we can modify it
                             lst[11] = evi_num
-                            args = tuple(lst)
+                            args = tuple(lst) # then convert back to a tuple when finished
                             break
+                        # <2.9 can't parse Y offset so we strip it out based on version
+                        if self.release == '2' and self.major_version in ['8', '7', '6']:
+                            lst = list(args) 
+                            offset_pair_list = lst[19].split('<and>') # MS arg 19 is self offset
+                            lst[19] = offset_pair_list[0]
+                            other_offset_list = lst[20].split('<and>') # MS arg 20 is paired offset
+                            lst[20] = other_offset_list[0]
+                            args = tuple(lst)
+                            
                 self.send_raw_message(
                     f'{command}#{"#".join([str(x) for x in args])}#%')
             else:
                 self.send_raw_message(f'{command}#%')
 
-        def send_ooc(self, msg):
-            """
-            Send an out-of-character message to the client.
-            :param msg: message to send
+        def send_ooc(self, msg: str):
+            """Send an out-of-character message to the client.
+
+            Args:
+                msg (str): message to send
             """
             self.send_command('CT', self.server.config['hostname'], msg, '1')
 
         def send_motd(self):
             """Send the message of the day to the client."""
-            motd = self.server.config['motd']
+            motd: str = self.server.config['motd']
             self.send_ooc(f'=== MOTD ===\r\n{motd}\r\n=============')
 
         def send_player_count(self):
@@ -146,14 +165,18 @@ class ClientManager:
             Send a message stating the number of players currently online
             to the client.
             """
-            players = self.server.player_count
-            limit = self.server.config['playerlimit']
+            players: int = self.server.player_count
+            limit: int = self.server.config['playerlimit']
             self.send_ooc(f'{players}/{limit} players online.')
 
-        def is_valid_name(self, name):
-            """
-            Check if the given string is valid as an OOC name.
-            :param name: name to check
+        def is_valid_name(self, name: str) -> bool:
+            """Check if the given string is valid as an OOC name.
+
+            Args:
+                name (str): name to check
+
+            Returns:
+                bool: True if name is valid, false if not
             """
             printset = set(string.ascii_letters + string.digits + "~ -_.',")
             name_ws = name.replace(' ', '')
@@ -173,15 +196,18 @@ class ClientManager:
             """Disconnect the client gracefully."""
             self.transport.close()
 
-        def change_character(self, char_id, force=False):
-            """
-            Change the client's character or force the character selection
+        def change_character(self, char_id: int, force=False):
+            """Change the client's character or force the character selection
             screen to appear for the client.
-            :param char_id: character ID to switch to
-            :param force: whether or not the client is forced to switch
-            to another character if the target character is not available
-            (Default value = False)
+            Args:
+                char_id (int):  character ID to switch to
+                force (bool, optional): whether or not the client is forced to switch
+                to another character if the target character is not available. Defaults to False.
+
+            Raises:
+                ClientError: A character is not available
             """
+
             # If it's -1, we want to be the spectator character.
             if char_id != -1:
                 if not self.server.is_valid_char_id(char_id):
@@ -207,12 +233,12 @@ class ClientManager:
 
             new_char = self.char_name
             database.log_room('char.change', self, self.area,
-                message={'from': old_char, 'to': new_char})
+                              message={'from': old_char, 'to': new_char})
 
-        def change_music_cd(self):
-            """
-            Check if the client can change music or not.
-            :returns: how many seconds the client must wait to change music
+        def change_music_cd(self) -> int:
+            """Check if the client can change music or not.
+            Returns:
+                int: how many seconds the client must wait to change music
             """
             if self.is_mod or self in self.area.owners:
                 return 0
@@ -237,10 +263,11 @@ class ClientManager:
             self.mus_change_time[self.mus_counter] = time.time()
             return 0
 
-        def wtce_mute(self):
-            """
-            Check if the client can use WT/CE or not.
-            :returns: how many seconds the client must wait to use WT/CE
+        def wtce_mute(self) -> int:
+            """Check if the client can use WT/CE or not.
+
+            Returns:
+                int: how many seconds the client must wait to use WT/CE
             """
             if self.is_mod or self in self.area.owners:
                 return 0
@@ -259,7 +286,7 @@ class ClientManager:
                 (self.wtce_counter - times_per_interval + 1) %
                     times_per_interval] < interval_length:
                 self.wtce_mute_time = time.time()
-                return self.server.config['music_change_floodguard'][
+                return self.server.config['wtce_floodguard'][
                     'mute_length']
             self.wtce_counter = (self.wtce_counter + 1) % times_per_interval
             self.wtce_time[self.wtce_counter] = time.time()
@@ -272,9 +299,11 @@ class ClientManager:
             except ClientError:
                 raise
 
-        def reload_music_list(self, music=[]):
-            """
-            Rebuild the music list with the provided array, or the server music list as a whole.
+        def reload_music_list(self, music: List[Dict[str, str]]=[]):
+            """Rebuild the music list with the provided array, or the server music list as a whole.
+
+            Args:
+                music (List[Dict[str, str]], optional): List containing music information. Defaults to [].
             """
             song_list = []
 
@@ -288,8 +317,10 @@ class ClientManager:
             self.send_command('FM', *song_list)
 
         def reload_area_list(self, areas=[]):
-            """
-            Rebuild the area list according to provided areas list.
+            """Reload the area list
+
+            Args:
+                areas (List[AreaManager.Area], optional): List containing areas. Defaults to [].
             """
             area_list = []
 
@@ -299,45 +330,49 @@ class ClientManager:
             # KEEP THE ASTERISK
             self.send_command('FA', *area_list)
 
-
         def change_area(self, area):
-            """
-            Switch the client to another area, unless the area is locked.
-            :param area: area to switch to
+            """Switch the client to another area, unless the area is locked.
+
+            Args:
+                area (AreaManager.Area): Area to switch to
+
+            Raises:
+                ClientError: User already in area
+                ClientError: Area is locked
+                ClientError: No characters available in area
             """
             if self.area == area:
-                raise ClientError('User already in specified area.')
+                    raise ClientError('User already in specified area.')
             if area.is_locked == area.Locked.LOCKED and not self.is_mod and not self.id in area.invite_list:
-                raise ClientError('That area is locked!')
+                    raise ClientError('That area is locked!')
             if area.is_locked == area.Locked.SPECTATABLE and not self.is_mod and not self.id in area.invite_list:
-                self.send_ooc(
-                    'This area is spectatable, but not free - you cannot talk in-character unless invited.'
-                )
+                    self.send_ooc(
+                            'This area is spectatable, but not free - you cannot talk in-character unless invited.'
+                    )
 
             if self in self.area.afkers:
-                self.server.client_manager.toggle_afk(self)
+                    self.server.client_manager.toggle_afk(self)
             if self.area.jukebox:
-                self.area.remove_jukebox_vote(self, True)
+                    self.area.remove_jukebox_vote(self, True)
 
             old_area = self.area
             if not self.char_id == -1 and not area.is_char_available(self.char_id):
-                try:
-                    new_char_id = area.get_rand_avail_char_id()
-                except AreaError:
-                    raise ClientError('No available characters in that area.')
+                    try:
+                            new_char_id = area.get_rand_avail_char_id()
+                    except AreaError:
+                            raise ClientError('No available characters in that area.')
 
-                self.change_character(new_char_id)
-                self.send_ooc(
-                    f'Character taken, switched to {self.char_name}.')
+                    self.change_character(new_char_id)
+                    self.send_ooc(
+                            f'Character taken, switched to {self.char_name}.')
 
             self.area.remove_client(self)
             self.area = area
             area.new_client(self)
 
             self.send_ooc(
-                f'Changed area to {area.name} [{self.area.status}].')
-            self.area.send_command('CharsCheck',
-                                   *self.get_available_char_list())
+                    f'Changed area to {area.name} [{self.area.status}].')
+            self.area.send_command('CharsCheck',*self.get_available_char_list())
             self.area.send_command('CharsCheck', *self.get_available_char_list())
             self.area.shadow_status[self.char_id] = [self.ipid, self.hdid]
             self.send_command('HP', 1, self.area.hp_def)
@@ -362,14 +397,18 @@ class ClientManager:
                     msg += ' [*]'
             self.send_ooc(msg)
 
-        def get_area_info(self, area_id, mods, afk_check):
+        def get_area_info(self, area_id: int, mods: bool, afk_check: bool) -> str:
+            """Get information about a specific area.
+
+            Args:
+                area_id (int): Area ID
+                mods (bool): Limit player list to mods
+                afk_check (bool): Limit player list to afks
+
+            Returns:
+                str: Information about the area
             """
-            Get information about a specific area.
-            :param area_id: area ID
-            :param mods: limit player list to mods
-            :param afk_check: Limit player list to afks
-            :returns: information as a string
-            """
+
             info = '\r\n'
             try:
                 area = self.server.area_manager.get_area_by_id(area_id)
@@ -410,16 +449,19 @@ class ClientManager:
                 if c in area.afkers:
                     info += '[AFK]'
                 info += f' [{c.id}] {c.char_name}'
+                if c.showname != "":
+                    info += f' ({c.showname})'
                 if self.is_mod:
                     info += f' ({c.ipid}): {c.name}'
             return info
 
-        def send_area_info(self, area_id, mods, afk_check=False):
-            """
-            Send information over OOC about a specific area.
-            :param area_id: area ID
-            :param mods: limit player list to mods
-            :param afk_check: Limit player list to afks
+        def send_area_info(self, area_id: int, mods: bool, afk_check=False):
+            """Send information over OOC about a specific area.
+
+            Args:
+                area_id (int): Area ID
+                mods (bool): Limit player list to mods
+                afk_check (bool, optional): Limit player list to afks. Defaults to False.
             """
             # if area_id is -1 then return all areas. If mods is True then return only mods
             info = ''
@@ -435,7 +477,7 @@ class ClientManager:
                         client_list = client_list.clients
                     area_info = self.get_area_info(i, mods, afk_check)
                     if len(client_list) > 0 or len(
-                               self.server.area_manager.areas[i].owners) > 0:
+                            self.server.area_manager.areas[i].owners) > 0:
                         cnt += len(client_list)
                         info += f'{area_info}'
                 if afk_check:
@@ -501,18 +543,23 @@ class ClientManager:
                 char_list[x] = 0
             return char_list
 
-        def auth_mod(self, password):
-            """
-            Attempt to log in as a moderator.
-            :param password: password string
-            :returns: name of profile which the password belongs to, if login
-            was successful
-            :raises: ClientError if password is incorrect
+        def auth_mod(self, password: str) -> str:
+            """Attempt to log in as a moderator.
+
+            Args:
+                password (str): The password to login
+
+            Raises:
+                ClientError: Already logged in
+                ClientError: Incorrect password
+
+            Returns:
+                str: name of profile which the password belongs to, if login was successful
             """
             modpasses = self.server.config['modpass']
             if isinstance(modpasses, dict):
                 matches = [k for k in modpasses
-                    if modpasses[k]['password'] == password]
+                           if modpasses[k]['password'] == password]
             elif modpasses == password:
                 matches = ['default']
             else:
@@ -528,25 +575,26 @@ class ClientManager:
                 raise ClientError('Invalid password.')
 
         @property
-        def ip(self):
+        def ip(self) -> int:
             """Get an anonymized version of the IP address."""
             return self.ipid
 
         @property
-        def char_name(self):
+        def char_name(self) -> str:
             """Get the name of the character that the client is using."""
             if self.char_id == -1:
                 return 'Spectator'
             return self.server.char_list[self.char_id]
 
         def change_position(self, pos=''):
-            """
-            Change the character's current position in the area.
-            :param pos: position in area (Default value = '')
+            """Change the character's current position in the area.
+
+            Args:
+                pos (str, optional): Position in area. Defaults to ''.
             """
             self.pos = pos
             self.send_ooc(f'Position set to {pos}.')
-            self.send_command('SP', self.pos) #Send a "Set Position" packet
+            self.send_command('SP', self.pos)  # Send a "Set Position" packet
             self.send_command('LE', *self.area.get_evidence_list(self))
 
         def set_mod_call_delay(self):
@@ -588,7 +636,7 @@ class ClientManager:
         self.server = server
         self.cur_id = [i for i in range(self.server.config['playerlimit'])]
 
-    def new_client_preauth(self, client):
+    def new_client_preauth(self, client: Client) -> bool:
         maxclients = self.server.config['multiclient_limit']
         for c in self.server.client_manager.clients:
             if c.ipid == client.ipid:
@@ -596,10 +644,17 @@ class ClientManager:
                     return False
         return True
 
-    def new_client(self, transport):
-        """
-        Create a new client, add it to the list, and assign it a player ID.
-        :param transport: asyncio transport
+    def new_client(self, transport: asyncio.Transport) -> Client:
+        """Create a new client, add it to the list, and assign it a player ID.
+
+        Args:
+            transport (asyncio.Transport): Transport to send data across
+
+        Raises:
+            ClientError: The server is full
+
+        Returns:
+            Client: The newly constructed client
         """
         try:
             user_id = heappop(self.cur_id)
@@ -614,7 +669,7 @@ class ClientManager:
             x = peername + str(self.server.config['server_number'])
             hash_object = hashlib.sha256(x.encode('utf-8'))
             peername = hash_object.hexdigest()[:12]
-        
+
         c = self.Client(
             self.server, transport, user_id,
             database.ipid(peername))
@@ -625,10 +680,11 @@ class ClientManager:
                 client.clientscon += 1
         return c
 
-    def remove_client(self, client):
-        """
-        Remove a disconnected client from the client list.
-        :param client: disconnected client
+    def remove_client(self, client: Client):
+        """Remove a disconnected client from the client list.
+
+        Args:
+            client (Client): Disconnected client
         """
         if client.area.jukebox:
             client.area.remove_jukebox_vote(client, True)
@@ -646,18 +702,22 @@ class ClientManager:
                 c.clientscon -= 1
         self.clients.remove(client)
 
-    def get_targets(self, client, key, value, local=False, single=False):
-        """
-        Find players by a combination of identifying data.
-        Possible keys: player ID, OOC name, character name, HDID, IPID,
-        IP address (same as IPID)
+    def get_targets(self, client: Client, key: TargetType, value: Any, local=False, single=False) -> List[Client]:
+        """Find players by a combination of identifying data.
+            Possible keys: player ID, OOC name, character name, HDID, IPID,
+            IP address (same as IPID)
 
-        :param client: client
-        :param key: the type of identifier that `value` represents
-        :param value: data identifying a client
-        :param local: search in current area only (Default value = False)
-        :param single: search only a single user (Default value = False)
+        Args:
+            client (Client): [description]
+            key (TargetType): The type of identifier that the value parameter represents
+            value (Any): Data identifying a client
+            local (bool, optional): Search in current area only. Defaults to False.
+            single (bool, optional): Search only a single user. Defaults to False.
+
+        Returns:
+            List[Client]: A list containing the targeted clients
         """
+
         areas = None
         if local:
             areas = [client.area]
@@ -707,12 +767,20 @@ class ClientManager:
                 clients.append(client)
         return clients
 
-    def toggle_afk(self, client):
-            if client in client.area.afkers:
-                client.area.broadcast_ooc('{} is no longer AFK.'.format(client.char_name))
-                client.send_ooc('You are no longer AFK. Welcome back!')  # Making the server a bit friendly wouldn't hurt, right?
-                client.area.afkers.remove(client)
-            else:
-                client.area.broadcast_ooc('{} is now AFK.'.format(client.char_name))
-                client.send_ooc('You are now AFK. Have a good day!')
-                client.area.afkers.append(client)
+    def toggle_afk(self, client: Client):
+        """Toggle AFK status for a given client
+
+        Args:
+            client (Client): Client you are toggling
+        """
+        if client in client.area.afkers:
+            client.area.broadcast_ooc(
+                '{} is no longer AFK.'.format(client.char_name))
+            # Making the server a bit friendly wouldn't hurt, right?
+            client.send_ooc('You are no longer AFK. Welcome back!')
+            client.area.afkers.remove(client)
+        else:
+            client.area.broadcast_ooc(
+                '{} is now AFK.'.format(client.char_name))
+            client.send_ooc('You are now AFK. Have a good day!')
+            client.area.afkers.append(client)

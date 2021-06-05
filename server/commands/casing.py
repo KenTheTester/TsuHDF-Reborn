@@ -24,7 +24,9 @@ __all__ = [
     'ooc_cmd_prompt',
     'ooc_cmd_case',
     'ooc_cmd_asspull',
-    'ooc_cmd_keywords'
+    'ooc_cmd_keywords',
+    'ooc_cmd_testimony',
+    'ooc_cmd_afk'
 ]
 
 
@@ -100,7 +102,7 @@ def ooc_cmd_cm(client, arg):
     Add a case manager for the current room.
     Usage: /cm <id>
     """
-    if 'CM' not in client.area.evidence_mod:
+    if 'CM' not in client.area.evidence_mod and not client.is_mod:
         raise ClientError('You can\'t become a CM in this area')
     if len(client.area.owners) == 0:
         if len(arg) > 0:
@@ -502,3 +504,23 @@ def ooc_cmd_keywords(client, arg):
     key_msg += ', '.join(client.server.prompts.keys())
     client.send_ooc(key_msg)
         
+    
+def ooc_cmd_testimony(client, arg):
+    """
+    List the current testimony in this area.
+    Usage: /testimony
+    """
+    if len(arg) != 0:
+        raise ArgumentError('This command does not take any arguments.')
+    testi = list(client.area.testimony.statements)
+    testi.pop(0)
+    if len(testi) > 0:
+        testi_msg = 'Testimony: '+ client.area.testimony.title
+        i = 1
+        for x in testi:
+            testi_msg += f'\r\n{i}: '
+            testi_msg += x[4]
+            i = i + 1
+        client.send_ooc(testi_msg)
+    else:
+        raise ServerError('There is no testimony in this area.')
