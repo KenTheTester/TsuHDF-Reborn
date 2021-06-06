@@ -71,6 +71,7 @@ class AreaManager:
             self.hp_pro = 10
             self.doc = 'No document.'
             self.status = 'IDLE'
+            self.musiclog = []
             self.judgelog = []
             self.evidlog = []
             self.current_music = ''
@@ -495,6 +496,18 @@ class AreaManager:
             """
             self.doc = doc
 
+        def add_to_musiclog(self, client: ClientManager.Client, msg: str):
+            """Append an event to the /play music log (max 5 items).
+            Args:
+                client (ClientManager.Client): event origin
+                msg (str): event message
+            """
+            
+            if len(self.musiclog) >= 5:
+                self.musiclog = self.musiclog[1:]
+            self.musiclog.append(
+                f'{client.char_name} [{client.id}] {msg}.')
+
         def add_to_judgelog(self, client: ClientManager.Client, msg: str):
             """Append an event to the judge log (max 10 items).
             Args:
@@ -507,11 +520,11 @@ class AreaManager:
             self.judgelog.append(
                 f'{client.char_name} ({client.ip}) {msg}.')
 
-        def add_to_evidlog(self, client, msg):
-            """
-            Append evidence changes or deletion to the evidence log (max 10 items).
-            :param client: event origin
-            :param msg: event message
+        def add_to_evidlog(self, client: ClientManager.Client, msg: str):
+            """Append evidence changes or deletion to the evidence log (max 10 items).
+            Args:
+                client (ClientManager.Client): event origin
+                msg (str): event message
             """
             if len(self.evidlog) >= 10:
                 self.evidlog = self.evidlog[1:]

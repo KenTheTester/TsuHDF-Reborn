@@ -483,7 +483,10 @@ class ClientManager:
                 if afk_check:
                     info = f'Current AFK-ers: {cnt}{info}'
                 else:
-                    info = f'Current online: {cnt}{info}'
+                    if mods:
+                        info = f'Mods online: {self.server.area_manager.mods_online()}{info}'
+                    else:
+                        info = f'Current online: {cnt}{info}'
             else:
                 try:
                     client_list = self.server.area_manager.areas[area_id]

@@ -26,7 +26,8 @@ __all__ = [
     'ooc_cmd_ooc_unmute',
     'ooc_cmd_bans',
     'ooc_cmd_baninfo',
-    'ooc_cmd_lastchar'
+    'ooc_cmd_lastchar',
+    'ooc_cmd_warn'
 ]
 
 
@@ -568,11 +569,9 @@ def ooc_cmd_warn(client, arg):
             database.log_misc('warn', client, target=c, data={'reason': reason})
             client.send_ooc("{} was warned.".format(
                 c.char_name))
-            #Behold this absolute fucking mess
-            #BWOINK and OOC warning, mod call jury-rig
-            c.send_command('ZZ', '===== [ ! ] =====\nYou have been warned for:\n' + reason + '\n===== [ ! ] =====')
-            #Pop up, banned message jury-rig
-            c.send_command('BD', 'Just kidding. You are being warned for:\n' + reason)
+            c.send_ooc("You have received a warning from a moderator.")
+            #Pop up message
+            c.send_command('BB', 'You have been warned by a moderator:\n' + reason)
     else:
         try:
             client.send_ooc(
