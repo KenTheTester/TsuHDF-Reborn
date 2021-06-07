@@ -104,7 +104,7 @@ def ooc_cmd_cm(client, arg):
     """
     #if 'CM' not in client.area.evidence_mod and not client.is_mod:
         #raise ClientError('You can\'t become a CM in this area')
-    if len(client.area.owners) == 0 or client.is_mod:
+    if len(client.area.owners) == 0:
         if len(arg) > 0:
             raise ArgumentError(
                 'You cannot \'nominate\' people to be CMs when you are not one.'
@@ -145,7 +145,16 @@ def ooc_cmd_cm(client, arg):
                 client.send_ooc(
                     f'{id} does not look like a valid ID.')
     else:
-        raise ClientError('This area already has a CM.')
+        if client.is_mod:
+            client.area.owners.append(client)
+            if client.area.evidence_mod == 'HiddenCM':
+                client.area.broadcast_evidence_list()
+            client.server.area_manager.send_arup_cms()
+            client.area.broadcast_ooc('{} [{}] is CM in this area now.'.format(
+                client.char_name, client.id))
+            database.log_room('cm.add', client, client.area, target=client, message='self-added')
+        else:
+            raise ClientError('This area already has a CM. You can ask them to add you.')
 
 
 @mod_only(area_owners=True)
