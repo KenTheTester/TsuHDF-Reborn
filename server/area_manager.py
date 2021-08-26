@@ -71,6 +71,7 @@ class AreaManager:
             self.hp_pro = 10
             self.doc = 'No document.'
             self.status = 'IDLE'
+            self.musiclog = []
             self.judgelog = []
             self.evidlog = []
             self.current_music = ''
@@ -86,12 +87,6 @@ class AreaManager:
             self.abbreviation = abbreviation
             self.cards = dict()
             self.shadow_status = {}
-            """
-            #debug
-            self.evidence_list.append(Evidence("WOW", "desc", "1.png"))
-            self.evidence_list.append(Evidence("wewz", "desc2", "2.png"))
-            self.evidence_list.append(Evidence("weeeeeew", "desc3", "3.png"))
-            """
 
             self.is_locked = self.Locked.FREE
             self.blankposting_allowed = True
@@ -176,6 +171,8 @@ class AreaManager:
                 self.afkers.remove(client)
             if len(self.clients) == 0:
                 self.change_status('IDLE')
+                self.unlock()
+                client.area.owners = []
             if client.char_id != -1:
                 database.log_room('area.leave', client, self)
 
@@ -200,9 +197,9 @@ class AreaManager:
             """Mark the area as spectator-only."""
             self.is_locked = self.Locked.SPECTATABLE
             for i in self.clients:
-                self.invite_list[i.id] = None
+                self.invite_list[i.ipid] = None
             for i in self.owners:
-                self.invite_list[i.id] = None
+                self.invite_list[i.ipid] = None
             self.server.area_manager.send_arup_lock()
             self.broadcast_ooc('This area is spectatable now.')
 
@@ -435,7 +432,7 @@ class AreaManager:
             Returns:
                 bool: True if the client cannot interact, False otherwise
             """     
-            return self.is_locked != self.Locked.FREE and not client.is_mod and not client.id in self.invite_list
+            return self.is_locked != self.Locked.FREE and not client.is_mod and not client.ipid in self.invite_list
 
         def change_hp(self, side: int, val: int):
             """Set the penalty bars.
@@ -495,6 +492,18 @@ class AreaManager:
             """
             self.doc = doc
 
+        def add_to_musiclog(self, client: ClientManager.Client, msg: str):
+            """Append an event to the /play music log (max 5 items).
+            Args:
+                client (ClientManager.Client): event origin
+                msg (str): event message
+            """
+            
+            if len(self.musiclog) >= 5:
+                self.musiclog = self.musiclog[1:]
+            self.musiclog.append(
+                f'{client.char_name} [{client.id}] {msg}.')
+
         def add_to_judgelog(self, client: ClientManager.Client, msg: str):
             """Append an event to the judge log (max 10 items).
             Args:
@@ -507,11 +516,11 @@ class AreaManager:
             self.judgelog.append(
                 f'{client.char_name} ({client.ip}) {msg}.')
 
-        def add_to_evidlog(self, client, msg):
-            """
-            Append evidence changes or deletion to the evidence log (max 10 items).
-            :param client: event origin
-            :param msg: event message
+        def add_to_evidlog(self, client: ClientManager.Client, msg: str):
+            """Append evidence changes or deletion to the evidence log (max 10 items).
+            Args:
+                client (ClientManager.Client): event origin
+                msg (str): event message
             """
             if len(self.evidlog) >= 10:
                 self.evidlog = self.evidlog[1:]
@@ -618,7 +627,7 @@ class AreaManager:
                 Returns:
                     bool: whether the statement was amended
                 """
-                if index < 1 or index > len(self.statements) + 1:
+                if index < 1 or index >= len(self.statements): #changed maximum value of index, otherwise it'd allow you to 'amend' testimony indexes which don't exist, to no avail - tested
                     return False
                 message[14] = 1 # message[14] is color, and 1 is (by default) green
                 message = tuple(message)
@@ -628,6 +637,21 @@ class AreaManager:
                         self.statements[i] = message
                         return True
                     i += 1
+                return True
+
+            def insert_statement(self, index: int, message: list) -> bool:
+                """Insert a statement into the testimony.
+                Args:
+                    index (int): index of the statement to insert the new one AFTER
+                    message (list): the new statement
+                Returns:
+                    bool: whether the statement was inserted
+                """
+                if index < 0 or index >= len(self.statements): #having the index of 0 available makes it possible to insert a statement before the first one, right after title
+                    return False
+                message[14] = 1 # message[14] is color, and 1 is (by default) green
+                message = tuple(message)
+                self.statements.insert(index + 1, message)
                 return True
             
         def start_testimony(self, client: ClientManager.Client, title: str) -> bool:
@@ -724,6 +748,26 @@ class AreaManager:
                 return True
             else:
                 client.send_ooc('Couldn\'t amend statement ' + str(index) + '. Are you sure it exists?')
+                return False
+
+        def insert_testimony(self, client: ClientManager.Client, index:int, statement: list) -> bool:
+            """
+            Insert into the testimony a new <statement> after the statement at <index>.
+            Args:
+                client (ClientManager.Client): requester
+                index (int): index of the statement to insert AFTER
+                statement (list): the affected statement
+            Returns:
+                bool: whether the insert was successful
+            """
+            if client not in self.owners and (self.evidence_mod == "HiddenCM" or self.evidence_mod == "Mods"):
+                client.send_ooc('You don\'t have permission to amend testimony in this area!')
+                return False
+            if self.testimony.insert_statement(index, statement):
+                client.send_ooc('Inserted a new statement after statement ' + str(index) + ' successfully.')
+                return True
+            else:
+                client.send_ooc('Couldn\'t find statement ' + str(index) + '. Are you sure it exists?')
                 return False
             
         def remove_statement(self, client: ClientManager.Client, index: int) -> bool:

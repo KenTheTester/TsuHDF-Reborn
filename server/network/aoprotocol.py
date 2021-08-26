@@ -20,6 +20,7 @@ import arrow
 import asyncio
 import logging
 import unicodedata
+import json
 
 from enum import Enum
 from typing import List
@@ -222,22 +223,37 @@ class AOProtocol(asyncio.Protocol):
 
         database.add_hdid(ipid, hdid)
         ban = database.find_ban(ipid, hdid)
+
         if ban is not None:
-            if ban.unban_date is not None:
-                unban_date = arrow.get(ban.unban_date)
+            try:
+                special_ban_data = json.loads(ban.ban_data)
+            except (ValueError, TypeError):
+                special_ban_data = None
+
+            if special_ban_data is not None:
+                try:
+                    if special_ban_data['ban_type'] == 'area_curse':
+                        self.client.area_curse = special_ban_data['target_area']
+                        self.client.area_curse_info = ban
+                        self.client.change_area(self.server.area_manager.get_area_by_id(self.client.area_curse))
+                except (KeyError, ValueError):
+                    pass
             else:
-                unban_date = 'N/A'
+                if ban.unban_date is not None:
+                    unban_date = arrow.get(ban.unban_date)
+                else:
+                    unban_date = 'N/A'
 
-            msg = f'{ban.reason}\r\n'
-            msg += f'ID: {ban.ban_id}\r\n'
-            msg += f'Until: {unban_date.humanize()}'
+                msg = f'{ban.reason}\r\n'
+                msg += f'ID: {ban.ban_id}\r\n'
+                msg += f'Until: {unban_date.humanize()}'
 
-            database.log_connect(self.client, failed=True)
-            self.client.send_command('BD', msg)
-            self.client.disconnect()
-            return
-        else:
-            self.client.is_checked = True
+                database.log_connect(self.client, failed=True)
+                self.client.send_command('BD', msg)
+                self.client.disconnect()
+                return
+
+        self.client.is_checked = True
 
         database.log_connect(self.client, failed=False)
         self.client.send_command('ID', self.client.id, self.server.software,
@@ -266,7 +282,11 @@ class AOProtocol(asyncio.Protocol):
                                  'deskmod', 'evidence', 'modcall_reason',
                                  'cccc_ic_support', 'arup', 'casing_alerts',
                                  'prezoom', 'looping_sfx', 'additive', 'effects',
-                                 'y_offset', 'expanded_desk_mods')
+                                 'y_offset', 'expanded_desk_mods', 'auth_packet')
+
+        # Send Asset packet if asset_url is defined
+        if self.server.config['asset_url'] != None:
+            self.client.send_command('ASS', self.server.config['asset_url'])
 
     def net_cmd_ch(self, _):
         """Reset the client drop timeout (keepalive).
@@ -566,6 +586,23 @@ class AOProtocol(asyncio.Protocol):
                         return # don't send it again or it'll be rerecorded
                     elif self.client.area.is_examining:
                         self.client.area.examine_index = index # jump to the amended statement
+                except ValueError:
+                    self.client.send_ooc(
+                        "That does not look like a valid statement number!")
+                    return
+            elif text.startswith('/insert '):
+                part = text.split(' ')
+                text = ' '.join(part[2:])
+                args[4] = text
+                color = 1
+                try:
+                    index = int(part[1])
+                    if not self.client.area.insert_testimony(self.client, index, args):
+                        return
+                    if self.client.area.is_testifying:
+                        return # don't send it again or it'll be rerecorded
+                    elif self.client.area.is_examining:
+                        self.client.area.examine_index = index + 1 # jump to the amended statement
                 except ValueError:
                     self.client.send_ooc(
                         "That does not look like a valid statement number!")
