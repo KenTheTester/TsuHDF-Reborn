@@ -178,19 +178,9 @@ def ooc_cmd_uncm(client, arg):
     """
     Remove a case manager from the current area.
     Usage: /uncm <id>
-    - "*" uncm's everyone in the current area.
     - "@" uncm's everyone on the server.
     """
     if client.is_mod:
-        if arg == '*':
-            if len(client.area.owners) > 0:
-                client.area.owners.clear()
-                client.server.area_manager.send_arup_cms()
-                client.area.broadcast_ooc("Area CMs cleared.")
-                database.log_room('cm.clear', client, client.area, target=None)
-                return
-            else:
-                raise ArgumentError('Area has no CMs.')
         if arg == '@':
             for _, area in enumerate(client.server.area_manager.areas):
                 if len(area.owners) > 0:

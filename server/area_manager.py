@@ -87,12 +87,6 @@ class AreaManager:
             self.abbreviation = abbreviation
             self.cards = dict()
             self.shadow_status = {}
-            """
-            #debug
-            self.evidence_list.append(Evidence("WOW", "desc", "1.png"))
-            self.evidence_list.append(Evidence("wewz", "desc2", "2.png"))
-            self.evidence_list.append(Evidence("weeeeeew", "desc3", "3.png"))
-            """
 
             self.is_locked = self.Locked.FREE
             self.blankposting_allowed = True
