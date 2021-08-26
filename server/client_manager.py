@@ -345,7 +345,7 @@ class ClientManager:
                     raise ClientError('User already in specified area.')
             if area.is_locked == area.Locked.LOCKED and not self.is_mod and not self.id in area.invite_list:
                     raise ClientError('That area is locked!')
-            if area.is_locked == area.Locked.SPECTATABLE and not self.is_mod and not self.id in area.invite_list:
+            if area.is_locked == area.Locked.SPECTATABLE and not self.is_mod and not self.ipid in area.invite_list:
                     self.send_ooc(
                             'This area is spectatable, but not free - you cannot talk in-character unless invited.'
                     )

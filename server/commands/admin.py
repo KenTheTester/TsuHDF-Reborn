@@ -542,7 +542,7 @@ def ooc_cmd_warn(client, arg):
     Warn a player via an OOC message and popup.
     Usage: /warn <ipid> [reason]
     Special cases:
-     - "*" warns everyone in the current area.
+    - "*" warns everyone in the current area.
     """
     if len(arg) == 0:
         raise ArgumentError('You must specify a target. Use /warn <ipid> [reason]')

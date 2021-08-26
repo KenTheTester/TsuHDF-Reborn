@@ -201,9 +201,9 @@ class AreaManager:
             """Mark the area as spectator-only."""
             self.is_locked = self.Locked.SPECTATABLE
             for i in self.clients:
-                self.invite_list[i.id] = None
+                self.invite_list[i.ipid] = None
             for i in self.owners:
-                self.invite_list[i.id] = None
+                self.invite_list[i.ipid] = None
             self.server.area_manager.send_arup_lock()
             self.broadcast_ooc('This area is spectatable now.')
 
@@ -436,7 +436,7 @@ class AreaManager:
             Returns:
                 bool: True if the client cannot interact, False otherwise
             """     
-            return self.is_locked != self.Locked.FREE and not client.is_mod and not client.id in self.invite_list
+            return self.is_locked != self.Locked.FREE and not client.is_mod and not client.ipid in self.invite_list
 
         def change_hp(self, side: int, val: int):
             """Set the penalty bars.

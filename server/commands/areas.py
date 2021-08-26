@@ -212,11 +212,11 @@ def ooc_cmd_area_spectate(client, arg):
     Allow users to join the current area, but only as spectators.
     Usage: /area_spectate
     """
-    if not client.area.locking_allowed:
-        client.send_ooc('Area locking is disabled in this area.')
-    elif client.area.is_locked == client.area.Locked.SPECTATABLE:
+    #if not client.area.locking_allowed:
+        #client.send_ooc('Area locking is disabled in this area.')
+    if client.area.is_locked == client.area.Locked.SPECTATABLE:
         client.send_ooc('Area is already spectatable.')
-    elif client in client.area.owners:
+    elif client in client.area.owners or client.is_mod:
         client.area.spectator()
     else:
         raise ClientError('Only CM can make the area spectatable.')
@@ -229,10 +229,11 @@ def ooc_cmd_area_unlock(client, arg):
     """
     if client.area.is_locked == client.area.Locked.FREE:
         raise ClientError('Area is already unlocked.')
-    elif not client in client.area.owners:
+    elif client in client.area.owners or client.is_mod:
+        client.area.unlock()
+        client.send_ooc('Area is unlocked.')
+    else:
         raise ClientError('Only CM can unlock area.')
-    client.area.unlock()
-    client.send_ooc('Area is unlocked.')
 
 def ooc_cmd_link(client, arg):
     """
@@ -339,7 +340,7 @@ def ooc_cmd_invite(client, arg):
     try:
         c = client.server.client_manager.get_targets(client, TargetType.ID,
                                                      int(arg), False)[0]
-        client.area.invite_list[c.id] = None
+        client.area.invite_list[c.ipid] = None
         client.send_ooc('{} is invited to your area.'.format(
             c.char_name))
         c.send_ooc(

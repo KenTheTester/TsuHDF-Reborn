@@ -102,13 +102,27 @@ def ooc_cmd_cm(client, arg):
     Add a case manager for the current room.
     Usage: /cm <id>
     """
-    #if 'CM' not in client.area.evidence_mod and not client.is_mod:
-        #raise ClientError('You can\'t become a CM in this area')
+    if 'CM' not in client.area.evidence_mod and not client in client.area.owners and not client.is_mod:
+        raise ClientError('You can\'t become a CM in this area')
     if len(client.area.owners) == 0:
         if len(arg) > 0:
-            raise ArgumentError(
-                'You cannot \'nominate\' people to be CMs when you are not one.'
-            )
+            if client.is_mod:
+                id = int(arg)
+                c = client.server.client_manager.get_targets(
+                    client, TargetType.ID, id, False)[0]
+                client.area.owners.append(c)
+                if client.area.evidence_mod == 'HiddenCM':
+                    client.area.broadcast_evidence_list()
+                client.server.area_manager.send_arup_cms()
+                client.area.broadcast_ooc(
+                    '{} [{}] is CM in this area now.'.format(
+                            c.char_name, c.id))
+                database.log_room('cm.add', client, client.area, target=c)
+                return
+            else:
+                raise ArgumentError(
+                    'You cannot \'nominate\' people to be CMs when you are not one.'
+                )
         client.area.owners.append(client)
         if client.area.evidence_mod == 'HiddenCM':
             client.area.broadcast_evidence_list()
