@@ -173,6 +173,7 @@ class AreaManager:
                 self.change_status('IDLE')
                 self.unlock()
                 client.area.owners = []
+                self.server.area_manager.send_arup_cms()
             if client.char_id != -1:
                 database.log_room('area.leave', client, self)
 
