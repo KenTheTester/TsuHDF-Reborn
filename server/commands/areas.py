@@ -255,6 +255,9 @@ def ooc_cmd_link(client, arg):
     """
     links_list = client.server.misc_data
     max = 10
+
+    if links_list is None:
+        raise ClientError('data.yaml is null. Tell someone.')
     
     if len(arg) == 0:
         msg = 'Links available (use /link <option>):\n'
@@ -385,7 +388,7 @@ def ooc_cmd_uninvite(client, arg):
                     "You were removed from the area whitelist.")
                 database.log_room('uninvite', client, client.area, target=c)
                 if client.area.is_locked != client.area.Locked.FREE:
-                    client.area.invite_list.pop(c.id)
+                    client.area.invite_list.pop(c.ipid)
         except AreaError:
             raise
         except ClientError:
@@ -434,7 +437,7 @@ def ooc_cmd_area_kick(client, arg):
                     f"You were kicked from the area to area {output}.")
                 database.log_room('area_kick', client, client.area, target=c, message=output)
                 if client.area.is_locked != client.area.Locked.FREE:
-                    client.area.invite_list.pop(c.id)
+                    client.area.invite_list.pop(c.ipid)
         except AreaError:
             raise
         except ClientError:

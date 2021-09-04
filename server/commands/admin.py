@@ -509,13 +509,6 @@ def ooc_cmd_unmod(client, arg):
     client.send_ooc('you\'re not a mod now')
     client.send_command('AUTH', '-1')
 
-@mod_only()
-def ooc_cmd_mods(client, arg):
-    """
-    Show a list of moderators online.
-    Usage: /mods
-    """
-    client.send_area_info(-1, True)
 
 @mod_only()
 def ooc_cmd_ooc_mute(client, arg):

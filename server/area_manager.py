@@ -173,6 +173,7 @@ class AreaManager:
                 self.change_status('IDLE')
                 self.unlock()
                 client.area.owners = []
+                self.server.area_manager.send_arup_cms()
             if client.char_id != -1:
                 database.log_room('area.leave', client, self)
 
@@ -207,9 +208,9 @@ class AreaManager:
             """Mark the area as locked."""
             self.is_locked = self.Locked.LOCKED
             for i in self.clients:
-                self.invite_list[i.id] = None
+                self.invite_list[i.ipid] = None
             for i in self.owners:
-                self.invite_list[i.id] = None
+                self.invite_list[i.ipid] = None
             self.server.area_manager.send_arup_lock()
             self.broadcast_ooc('This area is locked now.')
 

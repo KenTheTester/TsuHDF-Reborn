@@ -109,29 +109,45 @@ def ooc_cmd_cm(client, arg):
     if len(client.area.owners) == 0 or client.is_mod:
         if len(arg) > 0:
             if client.is_mod:
-                id = int(arg)
-                c = client.server.client_manager.get_targets(
-                    client, TargetType.ID, id, False)[0]
-                client.area.owners.append(c)
+                arg = arg.split(' ')
+                for id in arg:
+                    try:
+                        id = int(id)
+                        c = client.server.client_manager.get_targets(
+                            client, TargetType.ID, id, False)[0]
+                        if not c in client.area.clients:
+                            raise ArgumentError(
+                                'You can only \'nominate\' people to be CMs when they are in the area.'
+                            )
+                        elif c in client.area.owners:
+                            client.send_ooc(
+                                '{} [{}] is already a CM here.'.format(
+                                    c.char_name, c.id))
+                        else:
+                            client.area.owners.append(c)
+                            if client.area.evidence_mod == 'HiddenCM':
+                                client.area.broadcast_evidence_list()
+                            client.server.area_manager.send_arup_cms()
+                            client.area.broadcast_ooc(
+                                '{} [{}] is CM in this area now.'.format(
+                                    c.char_name, c.id))
+                            database.log_room('cm.add', client, client.area, target=c)
+                    except:
+                        client.send_ooc(
+                            f'{id} does not look like a valid ID.')
+            else:
+                raise ClientError('You must be authorized to do that.')
+        else:
+            if client in client.area.owners:
+                raise ArgumentError('You are already a CM in this area!')
+            else:
+                client.area.owners.append(client)
                 if client.area.evidence_mod == 'HiddenCM':
                     client.area.broadcast_evidence_list()
                 client.server.area_manager.send_arup_cms()
-                client.area.broadcast_ooc(
-                    '{} [{}] is CM in this area now.'.format(
-                            c.char_name, c.id))
-                database.log_room('cm.add', client, client.area, target=c)
-                return
-            else:
-                raise ArgumentError(
-                    'You cannot \'nominate\' people to be CMs when you are not one.'
-                )
-        client.area.owners.append(client)
-        if client.area.evidence_mod == 'HiddenCM':
-            client.area.broadcast_evidence_list()
-        client.server.area_manager.send_arup_cms()
-        client.area.broadcast_ooc('{} [{}] is CM in this area now.'.format(
-            client.char_name, client.id))
-        database.log_room('cm.add', client, client.area, target=client, message='self-added')
+                client.area.broadcast_ooc('{} [{}] is CM in this area now.'.format(
+                    client.char_name, client.id))
+                database.log_room('cm.add', client, client.area, target=client, message='self-added')
     elif client in client.area.owners:
         if len(arg) > 0:
             arg = arg.split(' ')
@@ -161,16 +177,7 @@ def ooc_cmd_cm(client, arg):
                 client.send_ooc(
                     f'{id} does not look like a valid ID.')
     else:
-        if client.is_mod:
-            client.area.owners.append(client)
-            if client.area.evidence_mod == 'HiddenCM':
-                client.area.broadcast_evidence_list()
-            client.server.area_manager.send_arup_cms()
-            client.area.broadcast_ooc('{} [{}] is CM in this area now.'.format(
-                client.char_name, client.id))
-            database.log_room('cm.add', client, client.area, target=client, message='self-added')
-        else:
-            raise ClientError('This area already has a CM. You can ask them to add you.')
+        raise ClientError('You must be authorized to do that.')
 
 
 @mod_only(area_owners=True)

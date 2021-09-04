@@ -258,7 +258,7 @@ class ClientManager:
             Returns:
                 int: how many seconds the client must wait to change music
             """
-            if self.is_mod or self in self.area.owners:
+            if self.is_mod:
                 return 0
             if self.mus_mute_time:
                 if time.time() - self.mus_mute_time < self.server.config[
