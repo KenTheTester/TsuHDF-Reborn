@@ -201,26 +201,10 @@ def ooc_cmd_area_lock(client, arg):
         client.send_ooc('Area locking is disabled in this area.')
     elif client.area.is_locked == client.area.Locked.LOCKED:
         client.send_ooc('Area is already locked.')
-    elif client in client.area.owners:
+    elif client in client.area.owners or client.is_mod:
         client.area.lock()
     else:
         raise ClientError('Only CM can lock the area.')
-
-
-def ooc_cmd_area_spectate(client, arg):
-    """
-    Allow users to join the current area, but only as spectators.
-    Usage: /area_spectate
-    """
-    if not client.area.locking_allowed:
-        client.send_ooc('Area locking is disabled in this area.')
-    elif client.area.is_locked == client.area.Locked.SPECTATABLE:
-        client.send_ooc('Area is already spectatable.')
-    elif client in client.area.owners:
-        client.area.spectator()
-    else:
-        raise ClientError('Only CM can make the area spectatable.')
-
 
 def ooc_cmd_area_unlock(client, arg):
     """
@@ -229,10 +213,39 @@ def ooc_cmd_area_unlock(client, arg):
     """
     if client.area.is_locked == client.area.Locked.FREE:
         raise ClientError('Area is already unlocked.')
-    elif not client in client.area.owners:
+    elif client in client.area.owners or client.is_mod:
+        client.area.unlock()
+        client.send_ooc('Area is unlocked.')
+    else:
         raise ClientError('Only CM can unlock area.')
-    client.area.unlock()
-    client.send_ooc('Area is unlocked.')
+
+
+def ooc_cmd_area_spectate(client, arg):
+    """
+    Allow users to join the current area, but only as spectators.
+    Usage: /area_spectate
+    """
+    #if not client.area.locking_allowed:
+        #client.send_ooc('Area locking is disabled in this area.')
+    if client.area.is_locked == client.area.Locked.SPECTATABLE:
+        client.send_ooc('Area is already spectatable.')
+    elif client in client.area.owners or client.is_mod:
+        client.area.spectator()
+    else:
+        raise ClientError('Only CM can make the area spectatable.')
+
+def ooc_cmd_area_unlock(client, arg):
+    """
+    Allow anyone to freely join the current area.
+    Usage: /area_unlock
+    """
+    if client.area.is_locked == client.area.Locked.FREE:
+        raise ClientError('Area is already unlocked.')
+    elif client in client.area.owners or client.is_mod:
+        client.area.unlock()
+        client.send_ooc('Area is unlocked.')
+    else:
+        raise ClientError('Only CM can unlock area.')
 
 def ooc_cmd_link(client, arg):
     """
@@ -242,6 +255,9 @@ def ooc_cmd_link(client, arg):
     """
     links_list = client.server.misc_data
     max = 10
+
+    if links_list is None:
+        raise ClientError('data.yaml is null. Tell someone.')
     
     if len(arg) == 0:
         msg = 'Links available (use /link <option>):\n'
@@ -339,7 +355,7 @@ def ooc_cmd_invite(client, arg):
     try:
         c = client.server.client_manager.get_targets(client, TargetType.ID,
                                                      int(arg), False)[0]
-        client.area.invite_list[c.id] = None
+        client.area.invite_list[c.ipid] = None
         client.send_ooc('{} is invited to your area.'.format(
             c.char_name))
         c.send_ooc(
@@ -372,7 +388,7 @@ def ooc_cmd_uninvite(client, arg):
                     "You were removed from the area whitelist.")
                 database.log_room('uninvite', client, client.area, target=c)
                 if client.area.is_locked != client.area.Locked.FREE:
-                    client.area.invite_list.pop(c.id)
+                    client.area.invite_list.pop(c.ipid)
         except AreaError:
             raise
         except ClientError:
@@ -421,7 +437,7 @@ def ooc_cmd_area_kick(client, arg):
                     f"You were kicked from the area to area {output}.")
                 database.log_room('area_kick', client, client.area, target=c, message=output)
                 if client.area.is_locked != client.area.Locked.FREE:
-                    client.area.invite_list.pop(c.id)
+                    client.area.invite_list.pop(c.ipid)
         except AreaError:
             raise
         except ClientError:

@@ -21,6 +21,8 @@ import hashlib
 import string
 import asyncio
 
+import arrow
+
 from typing import Any, List, Dict
 from heapq import heappop, heappush
 
@@ -60,6 +62,8 @@ class ClientManager:
             self.shaken = False
             self.gimp = False
             self.charcurse = []
+            self.area_curse = None
+            self.area_curse_info = None
             self.muted_global = False
             self.muted_adverts = False
             self.is_muted = False
@@ -160,6 +164,20 @@ class ClientManager:
             motd: str = self.server.config['motd']
             self.send_ooc(f'=== MOTD ===\r\n{motd}\r\n=============')
 
+            ban = self.area_curse_info
+            if ban is not None:
+                if ban.unban_date is not None:
+                    unban_date = arrow.get(ban.unban_date)
+                else:
+                    unban_date = 'N/A'
+
+                msg = f'You have been bound to this area.\r\n'
+                msg += f'Reason: {ban.reason}\r\n'
+                msg += f'ID: {ban.ban_id}\r\n'
+                msg += f'Until: {unban_date.humanize()}'
+
+                self.send_ooc(msg)
+
         def send_player_count(self):
             """
             Send a message stating the number of players currently online
@@ -240,7 +258,7 @@ class ClientManager:
             Returns:
                 int: how many seconds the client must wait to change music
             """
-            if self.is_mod or self in self.area.owners:
+            if self.is_mod:
                 return 0
             if self.mus_mute_time:
                 if time.time() - self.mus_mute_time < self.server.config[
@@ -344,11 +362,13 @@ class ClientManager:
             if self.area == area:
                     raise ClientError('User already in specified area.')
             if area.is_locked == area.Locked.LOCKED and not self.is_mod and not self.id in area.invite_list:
-                    raise ClientError('That area is locked!')
-            if area.is_locked == area.Locked.SPECTATABLE and not self.is_mod and not self.id in area.invite_list:
-                    self.send_ooc(
-                            'This area is spectatable, but not free - you cannot talk in-character unless invited.'
-                    )
+                raise ClientError('That area is locked!')
+            if area.is_locked == area.Locked.SPECTATABLE and not self.is_mod and not self.ipid in area.invite_list:
+                self.send_ooc(
+                    'This area is spectatable, but not free - you cannot talk in-character unless invited.'
+                )
+            if self.area_curse is not None and self.area_curse != area.id:
+                raise ClientError('You are bound to this area.')
 
             if self in self.area.afkers:
                     self.server.client_manager.toggle_afk(self)
@@ -483,7 +503,10 @@ class ClientManager:
                 if afk_check:
                     info = f'Current AFK-ers: {cnt}{info}'
                 else:
-                    info = f'Current online: {cnt}{info}'
+                    if mods:
+                        info = f'Mods online: {self.server.area_manager.mods_online()}{info}'
+                    else:
+                        info = f'Current online: {cnt}{info}'
             else:
                 try:
                     client_list = self.server.area_manager.areas[area_id]

@@ -236,7 +236,9 @@ class TsuServer3:
         if 'testimony_limit' not in self.config:
             self.config['testimony_limit'] = 30
         if 'default_ban_duration' not in self.config:
-            self.config['default_ban_duration'] = 6
+            self.config['default_ban_duration'] = '6 hours'
+        if 'asset_url' not in self.config:
+            self.config['asset_url'] = None
 
     def load_characters(self):
         """Load the character list from a YAML file."""
@@ -526,6 +528,7 @@ class TsuServer3:
                         database.log_misc('unmod.modpass', client)
                         client.send_ooc(
                             'Your moderator credentials have been revoked.')
+                        client.send_command('AUTH', '-1')
             self.config['modpass'] = cfg_yaml['modpass']
 
         self.load_characters()

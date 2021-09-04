@@ -14,6 +14,7 @@ __all__ = [
     'ooc_cmd_evi_swap',
     'ooc_cmd_cm',
     'ooc_cmd_uncm',
+    'ooc_cmd_clear_cm',
     'ooc_cmd_setcase',
     'ooc_cmd_anncase',
     'ooc_cmd_blockwtce',
@@ -26,6 +27,7 @@ __all__ = [
     'ooc_cmd_asspull',
     'ooc_cmd_keywords',
     'ooc_cmd_testimony',
+    'ooc_cmd_cleartesti',
     'ooc_cmd_afk'
 ]
 
@@ -102,20 +104,50 @@ def ooc_cmd_cm(client, arg):
     Add a case manager for the current room.
     Usage: /cm <id>
     """
-    if 'CM' not in client.area.evidence_mod and not client.is_mod:
+    if 'CM' not in client.area.evidence_mod and not client in client.area.owners and not client.is_mod:
         raise ClientError('You can\'t become a CM in this area')
-    if len(client.area.owners) == 0:
+    if len(client.area.owners) == 0 or client.is_mod:
         if len(arg) > 0:
-            raise ArgumentError(
-                'You cannot \'nominate\' people to be CMs when you are not one.'
-            )
-        client.area.owners.append(client)
-        if client.area.evidence_mod == 'HiddenCM':
-            client.area.broadcast_evidence_list()
-        client.server.area_manager.send_arup_cms()
-        client.area.broadcast_ooc('{} [{}] is CM in this area now.'.format(
-            client.char_name, client.id))
-        database.log_room('cm.add', client, client.area, target=client, message='self-added')
+            if client.is_mod:
+                arg = arg.split(' ')
+                for id in arg:
+                    try:
+                        id = int(id)
+                        c = client.server.client_manager.get_targets(
+                            client, TargetType.ID, id, False)[0]
+                        if not c in client.area.clients:
+                            raise ArgumentError(
+                                'You can only \'nominate\' people to be CMs when they are in the area.'
+                            )
+                        elif c in client.area.owners:
+                            client.send_ooc(
+                                '{} [{}] is already a CM here.'.format(
+                                    c.char_name, c.id))
+                        else:
+                            client.area.owners.append(c)
+                            if client.area.evidence_mod == 'HiddenCM':
+                                client.area.broadcast_evidence_list()
+                            client.server.area_manager.send_arup_cms()
+                            client.area.broadcast_ooc(
+                                '{} [{}] is CM in this area now.'.format(
+                                    c.char_name, c.id))
+                            database.log_room('cm.add', client, client.area, target=c)
+                    except:
+                        client.send_ooc(
+                            f'{id} does not look like a valid ID.')
+            else:
+                raise ClientError('You must be authorized to do that.')
+        else:
+            if client in client.area.owners:
+                raise ArgumentError('You are already a CM in this area!')
+            else:
+                client.area.owners.append(client)
+                if client.area.evidence_mod == 'HiddenCM':
+                    client.area.broadcast_evidence_list()
+                client.server.area_manager.send_arup_cms()
+                client.area.broadcast_ooc('{} [{}] is CM in this area now.'.format(
+                    client.char_name, client.id))
+                database.log_room('cm.add', client, client.area, target=client, message='self-added')
     elif client in client.area.owners:
         if len(arg) > 0:
             arg = arg.split(' ')
@@ -153,7 +185,18 @@ def ooc_cmd_uncm(client, arg):
     """
     Remove a case manager from the current area.
     Usage: /uncm <id>
+    - "@" uncm's everyone on the server.
     """
+    if client.is_mod:
+        if arg == '@':
+            for _, area in enumerate(client.server.area_manager.areas):
+                if len(area.owners) > 0:
+                    area.owners.clear()
+            client.server.area_manager.send_arup_cms()
+            client.area.broadcast_ooc("Server CMs cleared.")
+            database.log_room('cm.clearAll', client, client.area, target=None)
+            return
+    
     if len(arg) > 0:
         arg = arg.split(' ')
     else:
@@ -178,6 +221,18 @@ def ooc_cmd_uncm(client, arg):
             client.send_ooc(
                 f'{id} does not look like a valid ID.')
 
+@mod_only()
+def ooc_cmd_clear_cm(client, arg):
+    """
+    Removes all case managers from the current area.
+    Usage: /clear_cm
+    """
+    client.area.owners = []
+    client.server.area_manager.send_arup_cms()
+    client.area.broadcast_ooc(
+                    '{} [{}] is no longer CM in this area.'.format(
+                        client.char_name, client.id))
+    database.log_room('cm.remove', client, client.area, target=client)
 
 # LEGACY
 def ooc_cmd_setcase(client, arg):
@@ -513,8 +568,10 @@ def ooc_cmd_testimony(client, arg):
     if len(arg) != 0:
         raise ArgumentError('This command does not take any arguments.')
     testi = list(client.area.testimony.statements)
-    testi.pop(0)
-    if len(testi) > 0:
+    if len(testi) <= 1:
+        raise ServerError('There is no testimony in this area.')
+    else:
+        testi.pop(0)
         testi_msg = 'Testimony: '+ client.area.testimony.title
         i = 1
         for x in testi:
@@ -522,5 +579,23 @@ def ooc_cmd_testimony(client, arg):
             testi_msg += x[4]
             i = i + 1
         client.send_ooc(testi_msg)
-    else:
+
+@mod_only(area_owners=True)
+def ooc_cmd_cleartesti(client, arg):
+    """
+    Clears the testimony list, deleting all statements.
+    Very handy, since otherwise you'd have to rewrite the testimony with
+    a 1-statement new one and remove that statement manually.
+    For mods and CM use only to prevent abuse.
+    Usage: /cleartesti
+    """
+    if len(arg) != 0:
+        raise ArgumentError('This command does not take any arguments.')
+    testi = list(client.area.testimony.statements)
+    if len(testi) <= 1:
         raise ServerError('There is no testimony in this area.')
+    else:
+        client.area.testimony.statements = []
+        client.area.testimony.title = ''
+        client.send_ooc('You have cleared the testimony.')
+        

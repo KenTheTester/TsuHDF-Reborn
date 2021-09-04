@@ -8,6 +8,7 @@ from . import mod_only
 
 __all__ = [
     'ooc_cmd_currentmusic',
+    'ooc_cmd_musiclog',
     'ooc_cmd_jukebox_toggle',
     'ooc_cmd_jukebox_skip',
     'ooc_cmd_jukebox',
@@ -36,6 +37,25 @@ def ooc_cmd_currentmusic(client, arg):
         client.send_ooc(
             'The current music is {} and was played by {}.'.format(
                 client.area.current_music, client.area.current_music_player))
+
+
+def ooc_cmd_musiclog(client, arg):
+    """
+    Show the last 5 songs played through the /play command.
+    Usage: /musiclog
+    """
+    if len(arg) != 0:
+        raise ArgumentError('This command has no arguments.')
+    mlog = client.area.musiclog
+    if len(mlog) > 0:
+        mlog_msg = '== Music Log =='
+        for x in mlog:
+            mlog_msg += f'\r\n{x}'
+        client.send_ooc(mlog_msg)
+    else:
+        raise ServerError(
+            'No songs have been /play-ed in this area since start of session.'
+        )
 
 
 @mod_only(area_owners=True)
@@ -143,8 +163,22 @@ def ooc_cmd_play(client, arg):
         raise ArgumentError('You must specify a song.')
     if YOUTUBE_RE.search(arg):
         raise ArgumentError('You cannot use YouTube links. You may use direct links to MP3, Ogg, or M3U streams.')
+    if client.is_muted:
+        raise ArgumentError('You are muted by a moderator.')
+    if not client.is_dj:
+            raise ArgumentError('You were blockdj\'d by a moderator.')
+    if client.area.cannot_ic_interact(client):
+            raise ArgumentError(
+                "You are not on the area's invite list, and thus, you cannot change music!"
+            )
+    if client.change_music_cd():
+        if (len(client.area.clients) != 1):
+            raise ArgumentError(
+                f'You changed the song too many times. Please try again after {int(client.change_music_cd())} seconds.'
+            )
     client.area.play_music(arg, client.char_id, 0) #don't loop it
     client.area.add_music_playing(client, arg)
+    client.area.add_to_musiclog(client, f'played {arg}')
     database.log_room('play', client, client.area, message=arg)
 
 
