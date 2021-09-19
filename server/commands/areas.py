@@ -355,6 +355,9 @@ def ooc_cmd_invite(client, arg):
     try:
         c = client.server.client_manager.get_targets(client, TargetType.ID,
                                                      int(arg), False)[0]
+        if c.ipid in client.area.invite_list:
+            client.send_ooc("This user has already been invited to the area!")
+            return
         client.area.invite_list[c.ipid] = None
         client.send_ooc('{} is invited to your area.'.format(
             c.char_name))
@@ -381,6 +384,8 @@ def ooc_cmd_uninvite(client, arg):
     if targets:
         try:
             for c in targets:
+                if c.ipid not in client.area.invite_list:
+                    raise ArgumentError('This user has already been uninvited from the area!')
                 client.send_ooc(
                     "You have removed {} from the whitelist.".format(
                         c.char_name))
