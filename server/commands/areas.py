@@ -231,6 +231,7 @@ def ooc_cmd_area_spectate(client, arg):
         client.send_ooc('Area is already spectatable.')
     elif client in client.area.owners or client.is_mod:
         client.area.spectator()
+        database.log_room('area.spectate', client, client.area, message=None)
     else:
         raise ClientError('Only CM can make the area spectatable.')
 
@@ -244,6 +245,7 @@ def ooc_cmd_area_unlock(client, arg):
     elif client in client.area.owners or client.is_mod:
         client.area.unlock()
         client.send_ooc('Area is unlocked.')
+        database.log_room('area.unlock', client, client.area, message=None)
     else:
         raise ClientError('Only CM can unlock area.')
 
