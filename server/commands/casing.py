@@ -409,13 +409,13 @@ def ooc_cmd_format(client, arg):
     option = ['colors', 'align', 'action']
 
     if len(arg) == 0:
-        client.send_ooc(f'All formatting options:\n{formats["colors"]}\n {formats["align"]}\n {formats["action"]}')
+        client.send_ooc(f'All IC formatting options:\n{formats["colors"]}\n {formats["align"]}\n {formats["action"]}')
     else:
         choice = arg.lower()
         if choice in option:
             client.send_ooc(f'{arg.capitalize()} formatting:\n {formats[choice]}')
         else:
-            client.send_ooc(f'Format options include: {option}')
+            client.send_ooc(f'Formatting options include: {option}')
 
 
 def ooc_cmd_prompt(client, arg):
