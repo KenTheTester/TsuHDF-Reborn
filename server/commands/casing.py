@@ -28,7 +28,8 @@ __all__ = [
     'ooc_cmd_keywords',
     'ooc_cmd_testimony',
     'ooc_cmd_cleartesti',
-    'ooc_cmd_afk'
+    'ooc_cmd_afk',
+    'ooc_cmd_format'
 ]
 
 
@@ -392,6 +393,30 @@ def ooc_cmd_evidlog(client, arg):
 
 def ooc_cmd_afk(client, arg):
     client.server.client_manager.toggle_afk(client)
+
+
+def ooc_cmd_format(client, arg):
+    '''
+    Prints the available IC markdown for text formatting, including colors, alignment and actions.
+    Usage: /format <option>
+    '''
+    formats = {
+        "colors": "`Green`, ~Red~, |Orange|, [Gray], (Blue), ºYellowº, №Pink№, √Cyan√",
+        "align": "~~Center, ~>Right align, \\n New line",
+        "action": "\s Shake, \\f Flash"
+    }
+
+    option = ['colors', 'align', 'action']
+
+    if len(arg) == 0:
+        client.send_ooc(f'All IC formatting options:\n{formats["colors"]}\n {formats["align"]}\n {formats["action"]}')
+    else:
+        choice = arg.lower()
+        if choice in option:
+            client.send_ooc(f'{arg.capitalize()} formatting:\n {formats[choice]}')
+        else:
+            client.send_ooc(f'Formatting options include: {option}')
+
 
 def ooc_cmd_prompt(client, arg):
     """
