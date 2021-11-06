@@ -69,7 +69,7 @@ class AreaManager:
             self.next_message_time = 0
             self.hp_def = 10
             self.hp_pro = 10
-            self.doc = 'No document.'
+            self.doc = 'No document. Find a template at https://aovidya.pw/templates'
             self.status = 'IDLE'
             self.musiclog = []
             self.judgelog = []
