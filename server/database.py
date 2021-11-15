@@ -186,11 +186,11 @@ class Database:
             else:
                 ban_exists = conn.execute(dedent('''
                     SELECT ban_id, unbanned FROM bans WHERE ban_id = ?
-                    '''), (target_id, )).fetchone()
+                    '''), (ban_id, )).fetchone()
                 if ban_exists is None:
-                    raise ServerError(f'Ban ID {target_id} does not exist.')
-                if bool(ban_exists.unbanned):
-                    raise ServerError(f'Ban ID {target_id} is already unbanned.')
+                    raise ServerError(f'Ban ID {ban_id} does not exist.')
+                #if bool(ban_exists.unbanned):
+                    #raise ServerError(f'Ban ID {ban_id} is already unbanned.')
             if ban_type == 'ipid':
                 ipid_exists = conn.execute(dedent('''
                     SELECT ipid FROM ipids WHERE ipid = ?
