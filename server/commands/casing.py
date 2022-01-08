@@ -401,7 +401,7 @@ def ooc_cmd_format(client, arg):
     Usage: /format <option>
     '''
     formats = {
-        "colors": "`Green`, ~Red~, |Orange|, 🤷Gray🤷, __Blue__, ºYellowº, №Pink№, √Cyan√",
+        "colors": "`Green`, ~Red~, |Orange|, 🤷Gray🤷, _Blue_, ºYellowº, №Pink№, √Cyan√",
         "align": "~~Center, ~>Right align, \\n New line",
         "action": "\s Shake, \\f Flash, { Slower text, } Faster text"
     }
