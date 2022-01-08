@@ -181,7 +181,7 @@ def ooc_cmd_play(client, arg):
     client.area.add_to_musiclog(client, f'played {arg}')
     database.log_room('play', client, client.area, message=arg)
 
-@mod_only(area_owners=True)
+@mod_only()
 def ooc_cmd_playl(client, arg):
     """
     Play a track, looped.
