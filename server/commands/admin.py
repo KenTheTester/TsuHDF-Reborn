@@ -170,8 +170,8 @@ def ooc_cmd_area_curse(client, arg):
     will be placed in a specified area and can't switch areas unless forcefully done
     by a moderator.
 
-    To unban, use the /unban command.
-    To add more IPIDs/HDIDs, use the /ban command as usual.
+    To uncurse, use the /area_uncurse command.
+    To add more IPIDs/HDIDs, use the /area_curse command as usual.
 
     Usage: /area_curse <ipid> <area_name> "reason" ["<N> <minute|hour|day|week|month>(s)|perma"]
     """
