@@ -174,8 +174,7 @@ def ooc_cmd_toggleadverts(client, arg):
 
 def ooc_cmd_pm(client, arg):
     """
-    Send a private message to another online user. These messages are not
-    logged by the server owner.
+    Send a private message to another online user.
     Usage: /pm <id|ooc-name|char-name> <message>
     """
     args = arg.split()
@@ -219,10 +218,13 @@ def ooc_cmd_pm(client, arg):
                 'PM from {} (ID: {}, IPID: {}) in {} ({}): {}'.format(
                     client.name, client.id, client.ipid, client.area.name,
                     client.char_name, msg))
+            database.log_room('chat.pm', client, client.area, message='To: ' + targets[0].char_name + ', Msg: ' + msg)
         else:
             c.send_ooc('PM from {} (ID: {}) in {} ({}): {}'.format(
                 client.name, client.id, client.area.name,
                 client.char_name, msg))
+            database.log_room('chat.pm', client, client.area, message='To: ' + targets[0].char_name + ', Msg: ' + msg)
+            
         client.send_ooc('PM sent to {}. Message: {}'.format(
             args[0], msg))
 
