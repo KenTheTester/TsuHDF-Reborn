@@ -9,6 +9,7 @@ __all__ = [
     'ooc_cmd_bglock',
     'ooc_cmd_allow_iniswap',
     'ooc_cmd_allow_blankposting',
+    'ooc_cmd_allow_showname',
     'ooc_cmd_force_nonint_pres',
     'ooc_cmd_status',
     'ooc_cmd_area',
@@ -95,6 +96,18 @@ def ooc_cmd_allow_blankposting(client, arg):
             client.char_name, client.id, answer))
     database.log_room('blankposting', client, client.area, message=client.area.blankposting_allowed)
 
+@mod_only()
+def ooc_cmd_allow_showname(client, arg):
+    """
+    Toggle whether or not users can use shownames in the current area.
+    Usage: /allow_showname
+    """
+    client.area.showname_changes_allowed = not client.area.showname_changes_allowed
+    answer = 'allowed' if client.area.showname_changes_allowed else 'forbidden'
+    client.area.broadcast_ooc(
+        '{} [{}] has set showname usage in the area to {}.'.format(
+            client.char_name, client.id, answer))
+    database.log_room('shownames', client, client.area, message=client.area.showname_changes_allowed)
 
 @mod_only(area_owners=True)
 def ooc_cmd_force_nonint_pres(client, arg):
