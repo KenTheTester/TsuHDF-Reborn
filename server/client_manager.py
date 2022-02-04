@@ -81,6 +81,7 @@ class ClientManager:
 
             # Casing stuff
             self.casing_cm = False
+            self.casing_dj = False
             self.casing_cases = ''
             self.casing_def = False
             self.casing_pro = False

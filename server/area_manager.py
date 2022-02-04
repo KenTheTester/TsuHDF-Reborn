@@ -99,6 +99,7 @@ class AreaManager:
             self.timers = [AreaManager.Timer() for _ in range(4)]
 
             self.owners = []
+            self.DJs = []
             self.afkers = []
             self.last_ic_message = None
             
