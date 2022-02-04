@@ -81,6 +81,7 @@ class ClientManager:
 
             # Casing stuff
             self.casing_cm = False
+            self.casing_dj = False
             self.casing_cases = ''
             self.casing_def = False
             self.casing_pro = False
@@ -112,6 +113,9 @@ class ClientManager:
             # movement system stuff
             self.last_move_time = 0
             self.move_delay = 0
+            
+            # idle timeout stuff
+            self.last_pkt_time = 0
 
         def send_raw_message(self, msg: str):
             """Send a raw packet over TCP.
@@ -807,3 +811,10 @@ class ClientManager:
                 '{} is now AFK.'.format(client.char_name))
             client.send_ooc('You are now AFK. Have a good day!')
             client.area.afkers.append(client)
+    
+    def check_idlers(self):
+        """Check all clients for idlers."""
+        for client in self.clients:
+            if time.time() - client.last_pkt_time > self.server.config['idle_timeout']['length'] and not client.is_mod:
+                client.disconnect()
+				

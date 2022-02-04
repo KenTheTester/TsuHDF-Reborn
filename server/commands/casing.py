@@ -12,6 +12,7 @@ __all__ = [
     'ooc_cmd_cleardoc',
     'ooc_cmd_evidence_mod',
     'ooc_cmd_evi_swap',
+    'ooc_cmd_cmdj',
     'ooc_cmd_cm',
     'ooc_cmd_uncm',
     'ooc_cmd_clear_cm',
@@ -99,6 +100,36 @@ def ooc_cmd_evi_swap(client, arg):
     except:
         raise ClientError("you must specify 2 numbers")
 
+@mod_only()
+def ooc_cmd_cmdj(client, arg):
+    """
+    Add a CM for the current room, as well as giving access to looping /play.
+    DJ can only be given by mod.
+    Usage: /cmdj <id>
+    """
+    if len(arg) > 0:
+        try:
+            targets = client.server.client_manager.get_targets(
+            client, TargetType.ID, int(arg), False)
+        except:
+            raise ArgumentError('You must specify a target. Use /cmdj <id>.')
+        if targets:
+            for c in targets:
+                ooc_cmd_cm(client, arg)
+                if c in client.area.DJs:
+                    client.send_ooc(
+                        '{} [{}] is already a DJ here.'.format(
+                            c.char_name, c.id))
+                else:
+                    database.log_room('cmdj.add', client, client.area, target=c)
+                    client.area.DJs.append(c)
+                    client.area.broadcast_ooc(
+                        '{} [{}] is DJ in this area now.'.format(
+                            c.char_name, c.id))
+        else:
+            client.send_ooc('No targets found.')
+    else:
+        raise ArgumentError("You must specify a target. Use /cmdj <id>.")
 
 def ooc_cmd_cm(client, arg):
     """
@@ -208,6 +239,7 @@ def ooc_cmd_uncm(client, arg):
             c = client.server.client_manager.get_targets(
                 client, TargetType.ID, id, False)[0]
             if c in client.area.owners:
+                client.area.DJs.remove(c)
                 client.area.owners.remove(c)
                 client.server.area_manager.send_arup_cms()
                 client.area.broadcast_ooc(
