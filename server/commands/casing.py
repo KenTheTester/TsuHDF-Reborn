@@ -239,8 +239,9 @@ def ooc_cmd_uncm(client, arg):
             id = int(id)
             c = client.server.client_manager.get_targets(
                 client, TargetType.ID, id, False)[0]
-            if c in client.area.owners:
+            if c in client.area.DJs:
                 client.area.DJs.remove(c)
+            if c in client.area.owners:
                 client.area.owners.remove(c)
                 client.server.area_manager.send_arup_cms()
                 client.area.broadcast_ooc(
