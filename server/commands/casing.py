@@ -265,10 +265,8 @@ def ooc_cmd_clear_cm(client, arg):
     client.area.owners = []
     client.area.DJs = []
     client.server.area_manager.send_arup_cms()
-    client.area.broadcast_ooc(
-                    '{} [{}] is no longer CM in this area.'.format(
-                        client.char_name, client.id))
-    database.log_room('cm.remove', client, client.area, target=client)
+    client.area.broadcast_ooc("Area CMs cleared.")
+    database.log_room('cm.clear', client, client.area, target=client)
 
 # LEGACY
 def ooc_cmd_setcase(client, arg):
