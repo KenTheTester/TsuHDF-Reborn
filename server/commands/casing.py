@@ -224,6 +224,7 @@ def ooc_cmd_uncm(client, arg):
             for _, area in enumerate(client.server.area_manager.areas):
                 if len(area.owners) > 0:
                     area.owners.clear()
+                    area.DJs.clear()
             client.server.area_manager.send_arup_cms()
             client.area.broadcast_ooc("Server CMs cleared.")
             database.log_room('cm.clearAll', client, client.area, target=None)
@@ -261,6 +262,7 @@ def ooc_cmd_clear_cm(client, arg):
     Usage: /clear_cm
     """
     client.area.owners = []
+    client.area.DJs = []
     client.server.area_manager.send_arup_cms()
     client.area.broadcast_ooc(
                     '{} [{}] is no longer CM in this area.'.format(
