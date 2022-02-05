@@ -425,7 +425,6 @@ def ooc_cmd_area_kick(client, arg):
     Usage: /area_kick <id> [area id]
     Special cases:
     - "afk" area kicks all users set to /afk.
-    - "*" area kicks everyone in the current area.
     """
     if not arg:
         raise ClientError(
@@ -434,10 +433,6 @@ def ooc_cmd_area_kick(client, arg):
     if arg[0].lower() == 'afk':
         trgtype = TargetType.AFK
         argi = arg[0]
-    elif arg[0] == '*':
-        trgtype = TargetType.ALL
-        argi = arg[0]
-        targets = [c for c in client.area.clients if c != client]
     else:
         trgtype = TargetType.ID
         argi = int(arg[0])
