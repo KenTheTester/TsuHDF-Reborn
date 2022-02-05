@@ -470,6 +470,8 @@ class ClientManager:
                         info += '[RCM]'
                     else:
                         info += '[CM]'
+                if c in area.DJs:
+                    info += '[DJ]'
                 if c in area.afkers:
                     info += '[AFK]'
                 info += f' [{c.id}] {c.char_name}'
@@ -718,6 +720,7 @@ class ClientManager:
         for a in self.server.area_manager.areas:
             if client in a.owners:
                 a.owners.remove(client)
+                a.DJs.remove(client)
                 client.server.area_manager.send_arup_cms()
                 if len(a.owners) == 0:
                     if a.is_locked != a.Locked.FREE:
