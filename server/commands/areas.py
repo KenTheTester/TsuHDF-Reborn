@@ -219,19 +219,6 @@ def ooc_cmd_area_lock(client, arg):
     else:
         raise ClientError('Only CM can lock the area.')
 
-def ooc_cmd_area_unlock(client, arg):
-    """
-    Allow anyone to freely join the current area.
-    Usage: /area_unlock
-    """
-    if client.area.is_locked == client.area.Locked.FREE:
-        raise ClientError('Area is already unlocked.')
-    elif client in client.area.owners or client.is_mod:
-        client.area.unlock()
-        client.send_ooc('Area is unlocked.')
-    else:
-        raise ClientError('Only CM can unlock area.')
-
 
 def ooc_cmd_area_spectate(client, arg):
     """
