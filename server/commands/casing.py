@@ -431,7 +431,7 @@ def ooc_cmd_afk(client, arg):
 def ooc_cmd_format(client, arg):
     '''
     Prints the available IC markdown for text formatting, including colors, alignment and actions.
-    Usage: /format <option>
+    Usage: /format [option]
     '''
     formats = {
         "colors": "`Green`, ~Red~, |Orange|, 🤷Gray🤷, _Blue_, ºYellowº, №Pink№, √Cyan√",
@@ -442,11 +442,11 @@ def ooc_cmd_format(client, arg):
     option = ['colors', 'align', 'action']
 
     if len(arg) == 0:
-        client.send_ooc(f'All IC formatting options:\n{formats["colors"]}\n {formats["align"]}\n {formats["action"]}')
+        client.send_ooc(f'All IC formatting options:\n{formats["colors"]}\n{formats["align"]}\n{formats["action"]}')
     else:
         choice = arg.lower()
         if choice in option:
-            client.send_ooc(f'{arg.capitalize()} formatting:\n {formats[choice]}')
+            client.send_ooc(f'{arg.capitalize()} formatting:\n{formats[choice]}')
         else:
             client.send_ooc(f'Formatting options include: {option}')
 

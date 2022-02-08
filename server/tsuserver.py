@@ -80,6 +80,8 @@ class TsuServer3:
             self.load_prompts()
             self.load_miscdata()
             self.save_miscdata()
+            self.load_bankdata()
+            self.save_bankdata()
         except yaml.YAMLError as exc:
             print('There was a syntax error parsing a configuration file:')
             print(exc)
@@ -281,6 +283,14 @@ class TsuServer3:
     def save_miscdata(self):
         with open('config/data.yaml', 'w') as data:
             yaml.dump(self.misc_data, data, indent=4)
+
+    def load_bankdata(self):
+        with open('config/bank.yaml', 'r', encoding='utf-8') as bank:
+            self.bank_data = yaml.safe_load(bank)
+
+    def save_bankdata(self):
+        with open('config/bank.yaml', 'w') as bank:
+            yaml.dump(self.bank_data, bank, indent=4)
 
     def load_backgrounds(self):
         """Load the backgrounds list from a YAML file."""
@@ -519,6 +529,7 @@ class TsuServer3:
          - Commands
          - Banlists
          - Misc Data
+         - Bank Data
         """
         with open('config/config.yaml', 'r') as cfg:
             cfg_yaml = yaml.safe_load(cfg)
@@ -553,6 +564,7 @@ class TsuServer3:
         self.load_prompts()
         self.load_ipranges()
         self.load_miscdata()
+        self.load_bankdata()
 
         import server.commands
         importlib.reload(server.commands)
