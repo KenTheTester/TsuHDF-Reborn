@@ -71,7 +71,6 @@ class ClientManager:
             self.pm_mute = False
             self.mod_call_time = 0
             self.ipid = ipid
-            self.lupacoin = 0
 
             # Pairing stuff
             self.charid_pair = -1

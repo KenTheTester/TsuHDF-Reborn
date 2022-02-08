@@ -1,5 +1,3 @@
-from multiprocessing.connection import Client
-import asyncio
 from server import database
 from server.constants import TargetType
 from server.exceptions import ClientError, ArgumentError
@@ -14,10 +12,7 @@ __all__ = [
     'ooc_cmd_gimp',
     'ooc_cmd_ungimp',
     'ooc_cmd_washhands',
-    'ooc_cmd_autosteno',
-    'ooc_cmd_lupacoin',
-    'ooc_cmd_givecoin',
-    'ooc_cmd_lupabuy'
+    'ooc_cmd_autosteno'
 ]
 
 
@@ -161,6 +156,7 @@ def ooc_cmd_washhands(client, arg):
     """
     client.send_ooc('You washed your hands!')
 
+
 def ooc_cmd_autosteno(client, arg):
     """
     Activate auto-steno.
@@ -168,103 +164,3 @@ def ooc_cmd_autosteno(client, arg):
     """
     client.send_ooc('Just take notes.')
 
-
-#APRIL MEMES
-def ooc_cmd_lupacoin(client, arg):
-    """
-    Create a new Lupacoin account or check balance.
-    Usage: /lupacoin
-    """
-    lupabank_list = client.server.bank_data
-    account = client.hdid
-    if account in lupabank_list:
-        coin = load_coin(client)
-        #client.send_ooc('You currently have {} Lupacoins.'.format(client.server.bank_data[account]))
-        client.send_ooc(f'You currently have {coin} Lupacoins.')
-    else:
-        client.send_ooc('Creating your Lupabank account...')
-        client.server.bank_data[account] = 50
-        client.server.save_bankdata()
-        client.send_ooc('Account created! We gave you 50 Lupacoins to start with!')
-
-def load_coin(client):
-    coin = client.server.bank_data[client.hdid]
-    return coin
-
-def save_coin(client, coin):
-    client.server.bank_data[client.hdid] = coin
-    client.server.save_bankdata()
-
-@mod_only()
-def ooc_cmd_givecoin(client, arg):
-    """
-    Give a user some Lupacoins.
-    Usage: /givecoin [id] [amount]
-    """
-    coin = load_coin(client)
-    coin += 1000
-    save_coin(client, coin)
-    client.send_ooc(f"You have gained Lupacoins! You now have {coin} Lupacoins.")
-
-
-def ooc_cmd_lupabuy(client, arg):
-    """
-    See items in the Lupashop and buy them.
-    Usage: /lupabuy [item] [text]
-    """
-    items = {
-        "basic": "gimp",
-        "average": "announce",
-        "premium": "popup"
-    }
-    try:
-        coin = load_coin(client)
-        #backup
-        client.lupacoin = coin
-    except:
-        raise ClientError("You don't have a Lupacoin account! Use /lupacoin first!")
-
-    if len(arg) == 0:
-        client.send_ooc(f"You have {coin} Lupacoins.")
-        client.send_ooc(f'All Lupashop items:\n100LC: {items["basic"]}\n500LC: {items["average"]}\n1000LC: {items["premium"]}')
-        client.send_ooc("Use /lupabuy [item] [text] to purchase.")
-    else:
-        args = arg.split(' ')
-        args[0] = args[0].lower()
-        choice = args[0]
-        if choice in items['basic']:
-            if coin >= 100:
-                coin -= 100
-                save_coin(client, coin)
-                client.gimp = True
-                client.send_ooc(f'You have gimped yourself for 30 seconds!\nYou have {coin} Lupacoin remaining.')
-            else:
-                raise ClientError("You do not have enough Lupacoins to buy this!")
-        elif choice in items['average']:
-            if coin >= 500:
-                if len(args) < 2:
-                    raise ArgumentError("Cannot send an empty announcement.")
-                else:
-                    coin -= 500
-                    save_coin(client, coin)
-                    client.send_ooc(f'You bought {choice.capitalize()}.\nYou have {coin} Lupacoin remaining.')
-                    msg = ' '.join(args[1:])
-                    client.server.send_all_cmd_pred(
-                        'CT', '{}'.format(client.server.config['hostname']),
-                        f'=== Announcement ===\r\n{msg}\r\n==================', '1')
-            else:
-                raise ClientError("You do not have enough Lupacoins to buy this!")
-        elif choice in items['premium']:
-            if coin >= 1000:
-                if len(args) < 2:
-                    raise ArgumentError("Cannot send an empty popup message.")
-                else:
-                    coin -= 1000
-                    save_coin(client, coin)
-                    client.send_ooc(f'You bought {choice.capitalize()}.\nYou have {coin} Lupacoin remaining.')
-                    targets = [c for c in client.area.clients]
-                    reason = ' '.join(args[1:])
-                    for c in targets:
-                        c.send_command('BB', 'You have received a message:\n' + reason)
-            else:
-                raise ClientError("You do not have enough Lupacoins to buy this!")
