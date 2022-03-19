@@ -12,6 +12,7 @@ __all__ = [
     'ooc_cmd_cleardoc',
     'ooc_cmd_evidence_mod',
     'ooc_cmd_evi_swap',
+    'ooc_cmd_cmdj',
     'ooc_cmd_cm',
     'ooc_cmd_uncm',
     'ooc_cmd_clear_cm',
@@ -99,6 +100,36 @@ def ooc_cmd_evi_swap(client, arg):
     except:
         raise ClientError("you must specify 2 numbers")
 
+@mod_only()
+def ooc_cmd_cmdj(client, arg):
+    """
+    Add a CM for the current room, as well as giving access to looping /play.
+    DJ can only be given by mod.
+    Usage: /cmdj <id>
+    """
+    if len(arg) > 0:
+        try:
+            targets = client.server.client_manager.get_targets(
+            client, TargetType.ID, int(arg), False)
+        except:
+            raise ArgumentError('You must specify a target. Use /cmdj <id>.')
+        if targets:
+            for c in targets:
+                ooc_cmd_cm(client, arg)
+                if c in client.area.DJs:
+                    client.send_ooc(
+                        '{} [{}] is already a DJ here.'.format(
+                            c.char_name, c.id))
+                else:
+                    database.log_room('cmdj.add', client, client.area, target=c)
+                    client.area.DJs.append(c)
+                    client.area.broadcast_ooc(
+                        '{} [{}] is DJ in this area now.'.format(
+                            c.char_name, c.id))
+        else:
+            client.send_ooc('No targets found.')
+    else:
+        raise ArgumentError("You must specify a target. Use /cmdj <id>.")
 
 def ooc_cmd_cm(client, arg):
     """
@@ -193,6 +224,7 @@ def ooc_cmd_uncm(client, arg):
             for _, area in enumerate(client.server.area_manager.areas):
                 if len(area.owners) > 0:
                     area.owners.clear()
+                    area.DJs.clear()
             client.server.area_manager.send_arup_cms()
             client.area.broadcast_ooc("Server CMs cleared.")
             database.log_room('cm.clearAll', client, client.area, target=None)
@@ -207,6 +239,8 @@ def ooc_cmd_uncm(client, arg):
             id = int(id)
             c = client.server.client_manager.get_targets(
                 client, TargetType.ID, id, False)[0]
+            if c in client.area.DJs:
+                client.area.DJs.remove(c)
             if c in client.area.owners:
                 client.area.owners.remove(c)
                 client.server.area_manager.send_arup_cms()
@@ -229,11 +263,10 @@ def ooc_cmd_clear_cm(client, arg):
     Usage: /clear_cm
     """
     client.area.owners = []
+    client.area.DJs = []
     client.server.area_manager.send_arup_cms()
-    client.area.broadcast_ooc(
-                    '{} [{}] is no longer CM in this area.'.format(
-                        client.char_name, client.id))
-    database.log_room('cm.remove', client, client.area, target=client)
+    client.area.broadcast_ooc("Area CMs cleared.")
+    database.log_room('cm.clear', client, client.area, target=client)
 
 # LEGACY
 def ooc_cmd_setcase(client, arg):

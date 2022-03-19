@@ -99,6 +99,7 @@ class AreaManager:
             self.timers = [AreaManager.Timer() for _ in range(4)]
 
             self.owners = []
+            self.DJs = []
             self.afkers = []
             self.last_ic_message = None
             
@@ -173,6 +174,7 @@ class AreaManager:
                 self.change_status('IDLE')
                 self.unlock()
                 client.area.owners = []
+                client.area.DJs = []
                 self.server.area_manager.send_arup_cms()
             if client.char_id != -1:
                 database.log_room('area.leave', client, self)

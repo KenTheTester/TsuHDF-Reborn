@@ -81,6 +81,7 @@ class ClientManager:
 
             # Casing stuff
             self.casing_cm = False
+            self.casing_dj = False
             self.casing_cases = ''
             self.casing_def = False
             self.casing_pro = False
@@ -469,6 +470,8 @@ class ClientManager:
                         info += '[RCM]'
                     else:
                         info += '[CM]'
+                if c in area.DJs:
+                    info += '[DJ]'
                 if c in area.afkers:
                     info += '[AFK]'
                 info += f' [{c.id}] {c.char_name}'
@@ -717,6 +720,7 @@ class ClientManager:
         for a in self.server.area_manager.areas:
             if client in a.owners:
                 a.owners.remove(client)
+                a.DJs.remove(client)
                 client.server.area_manager.send_arup_cms()
                 if len(a.owners) == 0:
                     if a.is_locked != a.Locked.FREE:
@@ -812,8 +816,10 @@ class ClientManager:
             client.area.afkers.append(client)
     
     def check_idlers(self):
-        """Check all clients for idlers."""
+        """Check all clients for Spectator idlers"""
         for client in self.clients:
-            if time.time() - client.last_pkt_time > self.server.config['idle_timeout']['length'] and not client.is_mod:
-                client.disconnect()
+            if client.char_id == -1:
+                if time.time() - client.last_pkt_time > self.server.config['idle_timeout']['length'] and not client.is_mod:
+                    client.send_command('BB', 'You have been disconnected due to being idle as Spectator for too long.')
+                    client.disconnect()
 				

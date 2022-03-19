@@ -181,33 +181,35 @@ def ooc_cmd_play(client, arg):
     client.area.add_to_musiclog(client, f'played {arg}')
     database.log_room('play', client, client.area, message=arg)
 
-@mod_only()
 def ooc_cmd_playl(client, arg):
     """
     Play a track, looped.
     Usage: /playl <song>
     """
-    if len(arg) == 0:
-        raise ArgumentError('You must specify a song.')
-    if YOUTUBE_RE.search(arg):
-        raise ArgumentError('You cannot use YouTube links. You may use direct links to MP3, Ogg, or M3U streams.')
-    if client.is_muted:
-        raise ArgumentError('You are muted by a moderator.')
-    if not client.is_dj:
-            raise ArgumentError('You were blockdj\'d by a moderator.')
-    if client.area.cannot_ic_interact(client):
-            raise ArgumentError(
-                "You are not on the area's invite list, and thus, you cannot change music!"
-            )
-    if client.change_music_cd():
-        if (len(client.area.clients) != 1):
-            raise ArgumentError(
-                f'You changed the song too many times. Please try again after {int(client.change_music_cd())} seconds.'
-            )
-    client.area.play_music(arg, client.char_id, 1) #loop it
-    client.area.add_music_playing(client, arg)
-    client.area.add_to_musiclog(client, f'played {arg}')
-    database.log_room('playloop', client, client.area, message=arg)
+    if client.is_mod or client in client.area.DJs:
+        if len(arg) == 0:
+            raise ArgumentError('You must specify a song.')
+        if YOUTUBE_RE.search(arg):
+            raise ArgumentError('You cannot use YouTube links. You may use direct links to MP3, Ogg, or M3U streams.')
+        if client.is_muted:
+            raise ArgumentError('You are muted by a moderator.')
+        if not client.is_dj:
+                raise ArgumentError('You were blockdj\'d by a moderator.')
+        if client.area.cannot_ic_interact(client):
+                raise ArgumentError(
+                    "You are not on the area's invite list, and thus, you cannot change music!"
+                )
+        if client.change_music_cd():
+            if (len(client.area.clients) != 1):
+                raise ArgumentError(
+                    f'You changed the song too many times. Please try again after {int(client.change_music_cd())} seconds.'
+                )
+        client.area.play_music(arg, client.char_id, 1) #loop it
+        client.area.add_music_playing(client, arg)
+        client.area.add_to_musiclog(client, f'looped {arg}')
+        database.log_room('playloop', client, client.area, message=arg)
+    else:
+        raise ClientError("You must be authorized to do that.")
 
 
 @mod_only()
