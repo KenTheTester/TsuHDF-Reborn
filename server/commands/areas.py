@@ -219,19 +219,6 @@ def ooc_cmd_area_lock(client, arg):
     else:
         raise ClientError('Only CM can lock the area.')
 
-def ooc_cmd_area_unlock(client, arg):
-    """
-    Allow anyone to freely join the current area.
-    Usage: /area_unlock
-    """
-    if client.area.is_locked == client.area.Locked.FREE:
-        raise ClientError('Area is already unlocked.')
-    elif client in client.area.owners or client.is_mod:
-        client.area.unlock()
-        client.send_ooc('Area is unlocked.')
-    else:
-        raise ClientError('Only CM can unlock area.')
-
 
 def ooc_cmd_area_spectate(client, arg):
     """
@@ -421,19 +408,22 @@ def ooc_cmd_uninvite(client, arg):
 def ooc_cmd_area_kick(client, arg):
     """
     Remove a user from the current area and move them to another area.
-    Usage: /area_kick <id> [area id]
     If no area id is entered, user will be kicked to area 0.
+    Usage: /area_kick <id> [area id]
+    Special cases:
+    - "afk" area kicks all users set to /afk.
     """
     if not arg:
         raise ClientError(
             'You must specify a target. Use /area_kick <id> [area id]')
     arg = arg.split(' ')
-    if arg[0] == 'afk':
+    if arg[0].lower() == 'afk':
         trgtype = TargetType.AFK
         argi = arg[0]
     else:
         trgtype = TargetType.ID
         argi = int(arg[0])
+    
     targets = client.server.client_manager.get_targets(client, trgtype,
                                                        argi, False)
     if targets:

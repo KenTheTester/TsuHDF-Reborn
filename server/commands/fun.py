@@ -11,7 +11,8 @@ __all__ = [
     'ooc_cmd_unshake',
     'ooc_cmd_gimp',
     'ooc_cmd_ungimp',
-    'ooc_cmd_washhands'
+    'ooc_cmd_washhands',
+    'ooc_cmd_autosteno'
 ]
 
 
@@ -154,4 +155,12 @@ def ooc_cmd_washhands(client, arg):
     Usage: /washhands
     """
     client.send_ooc('You washed your hands!')
+
+
+def ooc_cmd_autosteno(client, arg):
+    """
+    Activate auto-steno.
+    Usage: /autosteno
+    """
+    client.send_ooc('Just take notes.')
 
