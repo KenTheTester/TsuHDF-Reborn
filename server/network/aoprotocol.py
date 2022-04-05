@@ -771,7 +771,7 @@ class AOProtocol(asyncio.Protocol):
                                             )
 
         self.client.area.set_next_msg_delay(len(msg))
-        ignore = ["~", "|", "º", "`", "√", "_", "№", "😂", "🙏", "👏", "🙌", "🤦", "😱", "💯", "🅱️"]
+        ignore = ["~", "|", "º", "`", "√", "_", "№"]
         for ch in ignore:
             if ch in msg:
                 msg=msg.replace(ch, "")

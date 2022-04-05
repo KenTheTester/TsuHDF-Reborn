@@ -672,11 +672,11 @@ class ClientManager:
         def dank_message(self, message):
             """Dank a message."""
             import random
-            meme = ['😂', '🙏', '👏', '🙌', '🤦', '😱', '💯']
+            meme = ['\U0001F602', '\U0001F64F', '\U0001F44F', '\U0001F64C', '\U0001F926', '\U0001F631', '\U0001F4AF']
             rm = random.choice(meme)
             message = re.sub(r'\b' + 'good' + r'\b', 'bussin', message, flags=re.IGNORECASE)
             message = re.sub(r'\b' + 'bad' + r'\b', 'sus ඞඞ', message, flags=re.IGNORECASE)
-            message = re.sub('[bpg]', '🅱️', message, flags=re.IGNORECASE)
+            message = re.sub('[bpg]', '\U0001F171', message, flags=re.IGNORECASE)
             message = re.sub(r'\b' + 'yes' + r'\b', 'fr fr no cap', message, flags=re.IGNORECASE)
             message += " " + rm + rm + rm
             return re.sub(r'\s+', ' ', message)
