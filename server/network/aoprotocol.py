@@ -696,6 +696,10 @@ class AOProtocol(asyncio.Protocol):
             msg = self.client.shake_message(msg)
         if self.client.disemvowel:
             msg = self.client.disemvowel_message(msg)
+        if self.client.dank:
+            msg = self.client.dank_message(msg)
+        if self.client.rainbow:
+            msg = self.client.rainbow_message(msg)
 
         # Really simple spam protection that functions on the clientside pre-2.8.5, and really should've been serverside from the start
         if msg.strip() != '' and self.client.area.last_ic_message is not None and cid == self.client.area.last_ic_message[8] and msg.rstrip() == self.client.area.last_ic_message[4].rstrip():
@@ -767,6 +771,11 @@ class AOProtocol(asyncio.Protocol):
                                             )
 
         self.client.area.set_next_msg_delay(len(msg))
+        
+        ignore = ["~", "|", "º", "`", "√", "_", "№"]
+        for ch in ignore:
+            if ch in msg:
+                msg=msg.replace(ch, "")
         database.log_ic(self.client, self.client.area, showname, msg)
 
         if self.client.area.is_recording:

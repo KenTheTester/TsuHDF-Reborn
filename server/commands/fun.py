@@ -12,7 +12,9 @@ __all__ = [
     'ooc_cmd_gimp',
     'ooc_cmd_ungimp',
     'ooc_cmd_washhands',
-    'ooc_cmd_autosteno'
+    'ooc_cmd_autosteno',
+    'ooc_cmd_rainbow',
+    'ooc_cmd_dank'
 ]
 
 
@@ -164,3 +166,26 @@ def ooc_cmd_autosteno(client, arg):
     """
     client.send_ooc('Just take notes.')
 
+def ooc_cmd_rainbow(client, arg):
+    """
+    Activate or Deactivate rainbow text.
+    Usage: /rainbow
+    """
+    if client.rainbow:
+        client.rainbow = False
+        client.send_ooc("Rainbow Mode DEACTIVATED.")
+    else:
+        client.rainbow = True
+        client.send_ooc(f"Rainbow Mode ACTIVATED.")
+
+def ooc_cmd_dank(client, arg):
+    """
+    Activate or Deactivate dank text.
+    Usage: /dank
+    """
+    if client.dank:
+        client.dank = False
+        client.send_ooc("Dank Mode DEACTIVATED.")
+    else:
+        client.dank = True
+        client.send_ooc(f"Dank Mode ACTIVATED.")

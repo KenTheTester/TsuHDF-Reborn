@@ -71,6 +71,8 @@ class ClientManager:
             self.pm_mute = False
             self.mod_call_time = 0
             self.ipid = ipid
+            self.rainbow = False
+            self.dank = False
 
             # Pairing stuff
             self.charid_pair = -1
@@ -659,6 +661,25 @@ class ClientManager:
             import random
             message = self.server.gimp_list
             return random.choice(message)
+
+        def rainbow_message(self, message):
+            """Rainbow color a message."""
+            import random
+            colors = ["~", "|", "º", "`", "√", "_", "№"]
+            parts = list(message)
+            return ''.join(random.choice(colors)+'{}'.format(x) for x in parts)
+
+        def dank_message(self, message):
+            """Dank a message."""
+            import random
+            meme = ['\U0001F602', '\U0001F64F', '\U0001F44F', '\U0001F64C', '\U0001F926', '\U0001F631', '\U0001F4AF']
+            rm = random.choice(meme)
+            message = re.sub(r'\b' + 'good' + r'\b', 'bussin', message, flags=re.IGNORECASE)
+            message = re.sub(r'\b' + 'bad' + r'\b', 'sus ඞඞ', message, flags=re.IGNORECASE)
+            message = re.sub('[bpg]', '\U0001F171', message, flags=re.IGNORECASE)
+            message = re.sub(r'\b' + 'yes' + r'\b', 'fr fr no cap', message, flags=re.IGNORECASE)
+            message += " " + rm + rm + rm
+            return re.sub(r'\s+', ' ', message)
 
     def __init__(self, server):
         self.clients = set()
