@@ -168,10 +168,10 @@ def ooc_cmd_autosteno(client, arg):
 
 def ooc_cmd_rainbow(client, arg):
     """
-    Activate rainbow text.
+    Activate or Deactivate rainbow text.
     Usage: /rainbow
     """
-    if client.rainbow == True:
+    if client.rainbow:
         client.rainbow = False
         client.send_ooc("Rainbow Mode DEACTIVATED.")
     else:
@@ -180,10 +180,10 @@ def ooc_cmd_rainbow(client, arg):
 
 def ooc_cmd_dank(client, arg):
     """
-    Activate dank text.
+    Activate or Deactivate dank text.
     Usage: /dank
     """
-    if client.dank == True:
+    if client.dank:
         client.dank = False
         client.send_ooc("Dank Mode DEACTIVATED.")
     else:
