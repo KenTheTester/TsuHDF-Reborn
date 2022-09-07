@@ -477,10 +477,8 @@ class ClientManager:
                 if c in area.afkers:
                     info += '[AFK]'
                 info += f' [{c.id}] {c.char_name}'
-                if c.showname != "":
-                    info += f' ({c.showname})'
                 if self.is_mod:
-                    info += f' ({c.ipid}): {c.name}'
+                    info += f' ({c.showname})({c.ipid}): {c.name}'
             return info
 
         def send_area_info(self, area_id: int, mods: bool, afk_check=False):
