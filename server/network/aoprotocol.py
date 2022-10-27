@@ -571,7 +571,7 @@ class AOProtocol(asyncio.Protocol):
                 if not self.client.area.start_examination(self.client):
                     return
                 text = '~~-- ' + self.client.area.testimony.title + ' --'
-                color = 3"""
+                color = 3
         if self.client.area.is_testifying or self.client.area.is_examining:
             if text.startswith('/end'): # End the current testimony or examination.
                 if not self.client.area.end_testimony(self.client):
