@@ -28,6 +28,7 @@ from time import localtime, strftime, time
 
 from .. import commands
 from server import database
+from server.tsuserver import testify_enabled
 from server.fantacrypt import fanta_decrypt
 from server.constants import ESCAPE_CHARACTERS
 from server.exceptions import ClientError, AreaError, ArgumentError, ServerError
@@ -35,8 +36,6 @@ from server.exceptions import ClientError, AreaError, ArgumentError, ServerError
 
 logger_debug = logging.getLogger('debug')
 logger = logging.getLogger('events')
-
-testify_enabled = False #Can be used to enable or disable testify functionality
 
 class ProtocolError(Exception):
     pass
