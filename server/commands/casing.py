@@ -4,6 +4,7 @@ import random
 from server import database
 from server.constants import TargetType
 from server.exceptions import ClientError, ServerError, ArgumentError
+from server.tsuserver import testify_enabled
 
 from . import mod_only
 
@@ -623,6 +624,11 @@ def ooc_cmd_testimony(client, arg):
     List the current testimony in this area.
     Usage: /testimony
     """
+    #Check if testifying is enabled on the server
+    if not testify_enabled:
+        _testify_distabled(client)
+        return
+    
     if len(arg) != 0:
         raise ArgumentError('This command does not take any arguments.')
     testi = list(client.area.testimony.statements)
@@ -647,6 +653,12 @@ def ooc_cmd_cleartesti(client, arg):
     For mods and CM use only to prevent abuse.
     Usage: /cleartesti
     """
+    
+    #Check if testifying is enabled on the server
+    if not testify_enabled:
+        _testify_disabled(client)
+        return
+    
     if len(arg) != 0:
         raise ArgumentError('This command does not take any arguments.')
     testi = list(client.area.testimony.statements)
@@ -656,4 +668,8 @@ def ooc_cmd_cleartesti(client, arg):
         client.area.testimony.statements = []
         client.area.testimony.title = ''
         client.send_ooc('You have cleared the testimony.')
-        
+     
+def _testify_disabled(client):
+    """Simply an encapsulated way of telling the player the testimony
+    functionality is disabled"""
+    client.send_ooc('The Testify functionality is disabled on this server')
