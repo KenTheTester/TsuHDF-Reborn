@@ -560,7 +560,7 @@ class AOProtocol(asyncio.Protocol):
                 return
             text = ' '.join(part[1:])
         elif testify_enabled:
-            elif text.startswith('/testify '): # Start a new testimony in this area.
+            if text.startswith('/testify '): # Start a new testimony in this area.
                 part = text.split(' ')
                 text = ' '.join(part[1:]) # remove command
                 if not self.client.area.start_testimony(self.client, text):
