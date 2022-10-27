@@ -77,6 +77,9 @@ multiclient_limit: 16
 # How many statements a recorded testimony is allowed to contain; recommend this is set reasonably low to prevent using too much memory (default: 30)
 testimony_limit: 30
 
+#Enable or disable the testimony / testify functionality
+testify_enabled: false
+
 # Maximum number of characters can a message contain
 max_chars: 256
 
