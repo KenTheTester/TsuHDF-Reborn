@@ -28,7 +28,6 @@ from time import localtime, strftime, time
 
 from .. import commands
 from server import database
-from server.tsuserver import testify_enabled
 from server.fantacrypt import fanta_decrypt
 from server.constants import ESCAPE_CHARACTERS
 from server.exceptions import ClientError, AreaError, ArgumentError, ServerError
@@ -558,7 +557,7 @@ class AOProtocol(asyncio.Protocol):
                 self.client.send_ooc('You don\'t any areas!')
                 return
             text = ' '.join(part[1:])
-        elif testify_enabled:
+        elif self.client.area.server.testify_enabled:
             if text.startswith('/testify '): # Start a new testimony in this area.
                 part = text.split(' ')
                 text = ' '.join(part[1:]) # remove command

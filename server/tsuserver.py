@@ -128,7 +128,7 @@ class TsuServer3:
             asyncio.ensure_future(self.idle_loop())
         
         if self.config['testify_enabled']:
-            self.testify_enabled = True
+            self.testify_enabled = self.config['testify_enabled']
 
         asyncio.ensure_future(self.schedule_unbans())
 
