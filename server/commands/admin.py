@@ -32,8 +32,8 @@ __all__ = [
     'ooc_cmd_baninfo',
     'ooc_cmd_lastchar',
     'ooc_cmd_warn',
-    'ooc_cmd_enable_testify',
-    'ooc_cmd_disable_testify'
+    'ooc_cmd_testify_enable',
+    'ooc_cmd_testify_disable'
 ]
 
 
@@ -697,7 +697,7 @@ def ooc_cmd_warn(client, arg):
 
 
 @mod_only()
-def ooc_cmd_enable_testify(client, arg):
+def ooc_cmd_testify_enable(client, arg):
     """
     Enable testimony functionality on the whole server
     Usage: /testify_enable
@@ -709,7 +709,7 @@ def ooc_cmd_enable_testify(client, arg):
         client.send_ooc('You enabled testify functionality on the whole server.')
 
 @mod_only()
-def ooc_cmd_disable_testify(client, arg):
+def ooc_cmd_testify_disable(client, arg):
     """
     Disable testimony functionality on the whole server
     Usage: /testify_disable
