@@ -31,7 +31,9 @@ __all__ = [
     'ooc_cmd_bans',
     'ooc_cmd_baninfo',
     'ooc_cmd_lastchar',
-    'ooc_cmd_warn'
+    'ooc_cmd_warn',
+    'ooc_cmd_enable_testify',
+    'ooc_cmd_disable_testify'
 ]
 
 
@@ -694,3 +696,26 @@ def ooc_cmd_warn(client, arg):
                 'No targets to warn!')
 
 
+@mod_only()
+def ooc_cmd_enable_testify(client, arg):
+    """
+    Enable testimony functionality on the whole server
+    Usage: /testify_enable
+    """
+    if len(arg) > 0:
+        raise ClientError('This command does not take in any arguments!')
+    else:
+        client.server.testify_enabled = True
+        client.send_ooc('You enabled testify functionality on the whole server.')
+
+@mod_only()
+def ooc_cmd_disable_testify(client, arg):
+    """
+    Disable testimony functionality on the whole server
+    Usage: /testify_disable
+    """
+    if len(arg) > 0:
+        raise ClientError('This command does not take in any arguments!')
+    else:
+        client.server.testify_enabled = False
+        client.send_ooc('You disabled testify functionality on the whole server.')

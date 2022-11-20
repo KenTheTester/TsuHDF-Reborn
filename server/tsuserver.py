@@ -530,7 +530,7 @@ class TsuServer3:
         with open('config/config.yaml', 'r') as cfg:
             cfg_yaml = yaml.safe_load(cfg)
             self.config['motd'] = cfg_yaml['motd'].replace('\\n', ' \n')
-            self.config['testify_enabled'] = cfg_yaml['testify_enabled'].replace('\\n', '\n')
+            self.config['testify_enabled'] = cfg_yaml['testify_enabled']
 
             # Reload moderator passwords list and unmod any moderator affected by
             # credential changes or removals
