@@ -36,7 +36,6 @@ from server.exceptions import ClientError, AreaError, ArgumentError, ServerError
 logger_debug = logging.getLogger('debug')
 logger = logging.getLogger('events')
 
-
 class ProtocolError(Exception):
     pass
 
@@ -558,18 +557,19 @@ class AOProtocol(asyncio.Protocol):
                 self.client.send_ooc('You don\'t any areas!')
                 return
             text = ' '.join(part[1:])
-        elif text.startswith('/testify '): # Start a new testimony in this area.
-            part = text.split(' ')
-            text = ' '.join(part[1:]) # remove command
-            if not self.client.area.start_testimony(self.client, text):
-                return
-            text = '~~-- ' + text + ' --'
-            color = 3 # orange
-        elif text.startswith('/examine'): # Start an examination of this area's testimony.
-            if not self.client.area.start_examination(self.client):
-                return
-            text = '~~-- ' + self.client.area.testimony.title + ' --'
-            color = 3
+        elif self.client.area.server.testify_enabled:
+            if text.startswith('/testify '): # Start a new testimony in this area.
+                part = text.split(' ')
+                text = ' '.join(part[1:]) # remove command
+                if not self.client.area.start_testimony(self.client, text):
+                    return
+                text = '~~-- ' + text + ' --'
+                color = 3 # orange
+            elif text.startswith('/examine'): # Start an examination of this area's testimony.
+                if not self.client.area.start_examination(self.client):
+                    return
+                text = '~~-- ' + self.client.area.testimony.title + ' --'
+                color = 3
         if self.client.area.is_testifying or self.client.area.is_examining:
             if text.startswith('/end'): # End the current testimony or examination.
                 if not self.client.area.end_testimony(self.client):

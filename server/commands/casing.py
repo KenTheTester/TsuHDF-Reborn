@@ -623,6 +623,11 @@ def ooc_cmd_testimony(client, arg):
     List the current testimony in this area.
     Usage: /testimony
     """
+    #Check if testifying is enabled on the server
+    if not client.area.server.testify_enabled:
+        _notify_testify_disabled(client)
+        return
+    
     if len(arg) != 0:
         raise ArgumentError('This command does not take any arguments.')
     testi = list(client.area.testimony.statements)
@@ -647,6 +652,12 @@ def ooc_cmd_cleartesti(client, arg):
     For mods and CM use only to prevent abuse.
     Usage: /cleartesti
     """
+    
+    #Check if testifying is enabled on the server
+    if not client.area.server.testify_enabled:
+        _notify_testify_disabled(client)
+        return
+    
     if len(arg) != 0:
         raise ArgumentError('This command does not take any arguments.')
     testi = list(client.area.testimony.statements)
@@ -656,4 +667,8 @@ def ooc_cmd_cleartesti(client, arg):
         client.area.testimony.statements = []
         client.area.testimony.title = ''
         client.send_ooc('You have cleared the testimony.')
-        
+     
+def _notify_testify_disabled(client):
+    """Simply an encapsulated way of telling the player the testimony
+    functionality is disabled"""
+    client.send_ooc('The Testify functionality is disabled on this server')

@@ -57,6 +57,7 @@ class TsuServer3:
         self.ipRange_bans = []
         self.geoIpReader = None
         self.useGeoIp = False
+        self.testify_enabled = False
 
         try:
             self.geoIpReader = geoip2.database.Reader('./storage/GeoLite2-ASN.mmdb')
@@ -125,6 +126,9 @@ class TsuServer3:
         
         if self.config['idle_timeout']['use_idle_timeout']:
             asyncio.ensure_future(self.idle_loop())
+        
+        if self.config['testify_enabled']:
+            self.testify_enabled = self.config['testify_enabled']
 
         asyncio.ensure_future(self.schedule_unbans())
 
@@ -220,6 +224,9 @@ class TsuServer3:
             print('You are either running from the wrong directory, or')
             print('you forgot to rename config_sample (read the instructions).')
             sys.exit(1)
+        
+        if 'testify_enabled' not in self.config:
+            self.config['testify_enabled'] = False
 
         if 'music_change_floodguard' not in self.config:
             self.config['music_change_floodguard'] = {
@@ -523,6 +530,7 @@ class TsuServer3:
         with open('config/config.yaml', 'r') as cfg:
             cfg_yaml = yaml.safe_load(cfg)
             self.config['motd'] = cfg_yaml['motd'].replace('\\n', ' \n')
+            self.config['testify_enabled'] = cfg_yaml['testify_enabled']
 
             # Reload moderator passwords list and unmod any moderator affected by
             # credential changes or removals
