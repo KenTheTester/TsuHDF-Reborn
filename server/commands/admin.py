@@ -492,15 +492,10 @@ def ooc_cmd_online(client, _):
 
 def ooc_cmd_mods(client, arg):
     """
-    Show the number of moderators online and in the area.
+    Show a list of moderators online.
     Usage: /mods
     """
-    if client.is_mod:
-        client.send_area_info(-1, True)
-    else:
-        client.send_ooc(
-        "There are {} mods online. {} is in the area.".format(client.server.area_manager.mods_online(),
-                                                              len(client.area.get_mods())))
+    client.send_area_info(-1, True)
 
 
 def ooc_cmd_unmod(client, arg):
