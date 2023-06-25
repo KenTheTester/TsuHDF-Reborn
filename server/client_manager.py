@@ -835,10 +835,8 @@ class ClientManager:
             client.area.afkers.append(client)
     
     def check_idlers(self):
-        """Check all clients for Spectator idlers"""
+        """Check all clients for idlers."""
         for client in self.clients:
-            if client.char_id == -1:
-                if time.time() - client.last_pkt_time > self.server.config['idle_timeout']['length'] and not client.is_mod:
-                    client.send_command('BB', 'You have been disconnected due to being idle as Spectator for too long.')
-                    client.disconnect()
+            if time.time() - client.last_pkt_time > self.server.config['idle_timeout']['length'] and not client.is_mod:
+                client.disconnect()
 				
